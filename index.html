@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Izin SMA - Sistem Izin Keluar & Pulang Siswa</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QR Code Generator CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        },
+                        emerald: {
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .step-active {
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+        .step-done {
+            background-color: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+        .pulse-subtle {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .7; }
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col antialiased">
+
+    <!-- Top Header & Role Switcher -->
+    <header class="bg-primary-900 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Brand -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-inner font-bold text-xl">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-tight">E-IZIN SMA NEGERI 1</h1>
+                        <p class="text-xs text-blue-200">Sistem Perizinan Keluar & Pulang Bertingkat</p>
+                    </div>
+                </div>
+
+                <!-- Fast Role Switcher -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs text-blue-200 hidden sm:inline">Peran Aktif:</span>
+                    <div class="inline-flex bg-primary-800 p-1 rounded-xl border border-blue-700/50">
+                        <button onclick="switchRole('siswa')" id="role-btn-siswa" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-white bg-blue-600 shadow-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-user-graduate"></i>
+                            <span class="hidden md:inline">Siswa</span>
+                        </button>
+                        <button onclick="switchRole('piket')" id="role-btn-piket" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1.5">
+                            <i class="fa-solid fa-clipboard-check"></i>
+                            <span class="hidden md:inline">Guru Piket</span>
+                            <span id="badge-piket" class="ml-1 bg-amber-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+                        </button>
+                        <button onclick="switchRole('security')" id="role-btn-security" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1.5">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span class="hidden md:inline">Security Gerbang</span>
+                            <span id="badge-security" class="ml-1 bg-emerald-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+                        </button>
+                        <button onclick="switchRole('rekap')" id="role-btn-rekap" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1.5">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            <span class="hidden md:inline">Rekap</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Dynamic Role Banner Notice -->
+        <div id="role-banner" class="mb-6 p-4 rounded-2xl bg-blue-50 border border-blue-200/70 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div id="banner-icon" class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-user-graduate"></i>
+                </div>
+                <div>
+                    <h2 id="banner-title" class="font-bold text-slate-800 text-sm sm:text-base">Portal Siswa: Pengajuan & Cek Tiket Izin</h2>
+                    <p id="banner-desc" class="text-xs text-slate-500">Ajukan izin meninggalkan sekolah atau periksa status tiket keluar Anda.</p>
+                </div>
+            </div>
+            <div class="text-right hidden sm:block">
+                <span id="live-time" class="text-xs font-semibold px-3 py-1 bg-white rounded-full border border-blue-200 text-blue-800">
+                    --:--:-- WIB
+                </span>
+            </div>
+        </div>
+
+        <!-- VIEW 1: PORTAL SISWA -->
+        <div id="view-siswa" class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Form Pengajuan -->
+                <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+                        <div class="flex items-center space-x-2.5">
+                            <span class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-file-signature"></i></span>
+                            <h3 class="font-bold text-slate-800">Formulir Permohonan Izin</h3>
+                        </div>
+                        <span class="text-xs text-slate-400">*Wajib mengisi data valid</span>
+                    </div>
+
+                    <form id="form-izin" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nama Lengkap Siswa</label>
+                                <input type="text" id="input-nama" required placeholder="Contoh: Muhammad Farhan" 
+                                    class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">NISN / Kelas</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="text" id="input-nisn" required placeholder="NISN: 006..." 
+                                        class="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <select id="input-kelas" required class="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                        <option value="X-1">X-1</option>
+                                        <option value="X-2">X-2</option>
+                                        <option value="XI MIPA 1">XI MIPA 1</option>
+                                        <option value="XI IPS 2">XI IPS 2</option>
+                                        <option value="XII MIPA 1" selected>XII MIPA 1</option>
+                                        <option value="XII IPS 1">XII IPS 1</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Jenis Izin</label>
+                                <select id="input-jenis" required class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                    <option value="Izin Pulang (Sakit)">Izin Pulang - Sakit</option>
+                                    <option value="Izin Pulang (Keperluan Keluarga)">Izin Pulang - Keperluan Keluarga Mendesak</option>
+                                    <option value="Izin Keluar Sementara (Tugas/Dispensasi)">Izin Keluar Sementara (Dispensasi/Lomba)</option>
+                                    <option value="Izin Keluar Sementara (Keperluan Singkat)">Izin Keluar Sementara (Fotokopi/Beli Obat)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">No. WhatsApp Orang Tua/Wali</label>
+                                <input type="tel" id="input-nohp" required placeholder="081234567890" 
+                                    class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Alasan Detail Permohonan</label>
+                            <textarea id="input-alasan" rows="3" required placeholder="Jelaskan alasan rinci mengapa harus izin keluar..." 
+                                class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="submit" class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-md hover:shadow-lg transition flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>Kirim Permohonan Izin</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Status Tiket Aktif / E-Pass Siswa -->
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between h-full">
+                        <div>
+                            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                                    <h3 class="font-bold text-slate-800 text-sm">Tiket Izin Terakhir Anda</h3>
+                                </div>
+                                <span id="current-pass-id" class="text-xs font-mono font-bold bg-slate-100 px-2.5 py-1 rounded-md text-slate-600">
+                                    IZN-2026-001
+                                </span>
+                            </div>
+
+                            <div id="active-pass-container" class="mt-4">
+                                <!-- Pass info loaded via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Info Card -->
+                        <div class="mt-6 bg-amber-50 rounded-xl p-3.5 border border-amber-200/70 text-xs text-amber-900 flex items-start space-x-2.5">
+                            <i class="fa-solid fa-circle-info text-amber-600 mt-0.5 text-sm"></i>
+                            <div>
+                                <span class="font-bold">Prosedur Keluar Sekolah:</span>
+                                <ol class="list-decimal ml-4 mt-1 space-y-0.5 text-amber-800">
+                                    <li>Minta konfirmasi & TTD/Approve Guru Piket.</li>
+                                    <li>Tunjukkan QR/Tiket ke Satpam di gerbang depan.</li>
+                                    <li>Satpam memverifikasi dan mencatat waktu keluar.</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: PORTAL GURU PIKET -->
+        <div id="view-piket" class="hidden space-y-6">
+            <!-- Summary Stats for Guru Piket -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500">Menunggu Verifikasi Piket</p>
+                        <h4 id="stat-piket-pending" class="text-2xl font-bold text-amber-600 mt-1">0</h4>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500">Disetujui Hari Ini</p>
+                        <h4 id="stat-piket-approved" class="text-2xl font-bold text-blue-600 mt-1">0</h4>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500">Ditolak / Batal</p>
+                        <h4 id="stat-piket-rejected" class="text-2xl font-bold text-rose-600 mt-1">0</h4>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-ban"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Queue List -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">Antrean Pengajuan Izin Siswa (Tahap 1)</h3>
+                        <p class="text-xs text-slate-500">Periksa alasan siswa dan pastikan telah mengonfirmasi orang tua jika sakit/pulang.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400">Nama Petugas:</span>
+                        <input type="text" id="officer-piket-name" value="Drs. H. Hendra, M.Pd" class="px-2.5 py-1 text-xs border rounded-lg font-medium bg-slate-50 text-slate-700">
+                    </div>
+                </div>
+
+                <div id="piket-queue-container" class="divide-y divide-slate-100">
+                    <!-- Dynamic Piket Items -->
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: PORTAL SECURITY GERBANG -->
+        <div id="view-security" class="hidden space-y-6">
+            <!-- Security Gate Quick Verification Card -->
+            <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-md">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-400 flex items-center justify-center text-2xl">
+                            <i class="fa-solid fa-torii-gate"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold">Pos Security Gerbang Utama (Tahap 2)</h3>
+                            <p class="text-xs text-slate-300">Validasi fisik tiket siswa sebelum membuka palang pintu / gerbang sekolah.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <div class="relative w-full md:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                            <input type="text" id="security-search" oninput="filterSecurityList()" placeholder="Ketik Kode Tiket / Nama..." 
+                                class="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                        </div>
+                        <div class="flex items-center gap-1.5 text-xs text-slate-300">
+                            <span>Petugas:</span>
+                            <input type="text" id="officer-security-name" value="Sutrisno (Pos A)" class="px-2 py-1 text-xs rounded-lg bg-slate-800 border border-slate-700 text-emerald-400 font-medium">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List of approved by Teacher, Waiting at Gate -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-800">Siswa Siap Keluar Gerbang (Disetujui Guru Piket)</h3>
+                        <p class="text-xs text-slate-500">Siswa pada daftar ini telah mendapat persetujuan Guru Piket dan berhak meninggalkan area sekolah.</p>
+                    </div>
+                    <span id="security-ready-count" class="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full">
+                        0 Siap Keluar
+                    </span>
+                </div>
+
+                <div id="security-queue-container" class="divide-y divide-slate-100">
+                    <!-- Dynamic Security Items -->
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 4: REKAPITULASI & LOG LENGKAP -->
+        <div id="view-rekap" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">Riwayat & Log Izin Keluar Sekolah</h3>
+                        <p class="text-xs text-slate-500">Audit trail lengkap alur persetujuan Guru Piket dan Security Gerbang.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportCSV()" class="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <span>Export CSV</span>
+                        </button>
+                        <button onclick="printFilteredReport()" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-print"></i>
+                            <span>Cetak Rekap</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Controls -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                    <input type="text" id="rekap-search" oninput="renderRekapTable()" placeholder="Cari nama siswa, kelas, kode tiket..." 
+                        class="px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500">
+                    <select id="rekap-filter-status" onchange="renderRekapTable()" class="px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-white">
+                        <option value="ALL">Semua Status</option>
+                        <option value="MENUNGGU_GURU">Menunggu Guru Piket</option>
+                        <option value="MENUNGGU_SECURITY">Menunggu Security</option>
+                        <option value="SELESAI_KELUAR">Selesai (Sudah Keluar)</option>
+                        <option value="DITOLAK">Ditolak</option>
+                    </select>
+                    <select id="rekap-filter-jenis" onchange="renderRekapTable()" class="px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-white">
+                        <option value="ALL">Semua Jenis Izin</option>
+                        <option value="Sakit">Izin Sakit</option>
+                        <option value="Keperluan Keluarga">Keperluan Keluarga</option>
+                        <option value="Dispensasi">Dispensasi Tugas</option>
+                    </select>
+                </div>
+
+                <!-- Table -->
+                <div class="overflow-x-auto rounded-xl border border-slate-100">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">Kode Tiket</th>
+                                <th class="p-3">Siswa & Kelas</th>
+                                <th class="p-3">Jenis Izin & Alasan</th>
+                                <th class="p-3">Verifikator 1 (Piket)</th>
+                                <th class="p-3">Verifikator 2 (Security)</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rekap-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL: APPROVAL GURU PIKET -->
+    <div id="modal-piket-approve" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center space-x-2 text-blue-600">
+                    <i class="fa-solid fa-clipboard-check text-lg"></i>
+                    <h3 class="font-bold text-slate-800">Verifikasi Guru Piket (Tahap 1)</h3>
+                </div>
+                <button onclick="closeModal('modal-piket-approve')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="mt-4 space-y-3">
+                <input type="hidden" id="piket-target-id">
+                <div class="bg-slate-50 p-3 rounded-xl text-xs space-y-1">
+                    <p><span class="text-slate-400 font-medium">Siswa:</span> <span id="modal-piket-student" class="font-bold text-slate-800"></span></p>
+                    <p><span class="text-slate-400 font-medium">Alasan:</span> <span id="modal-piket-reason" class="text-slate-700"></span></p>
+                    <p><span class="text-slate-400 font-medium">Kontak Ortu:</span> <span id="modal-piket-parent" class="font-mono text-blue-600 font-semibold"></span></p>
+                </div>
+
+                <div class="space-y-2 pt-1">
+                    <label class="flex items-center space-x-2 text-xs text-slate-700 cursor-pointer">
+                        <input type="checkbox" id="check-parent-confirmed" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4">
+                        <span>Saya sudah konfirmasi orang tua via Telepon / WA</span>
+                    </label>
+                    <label class="block text-xs font-semibold text-slate-600">Catatan Guru Piket (Opsional)</label>
+                    <input type="text" id="piket-note-input" placeholder="Contoh: Diizinkan pulang, dijemput kakak kandung" 
+                        class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="mt-6 flex space-x-2">
+                <button onclick="confirmPiketAction('REJECT')" class="w-1/3 py-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold transition">
+                    Tolak Izin
+                </button>
+                <button onclick="confirmPiketAction('APPROVE')" class="w-2/3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Setujui (Kirim ke Security)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SECURITY GATE OUT CONFIRMATION -->
+    <div id="modal-security-gate" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center space-x-2 text-emerald-600">
+                    <i class="fa-solid fa-torii-gate text-lg"></i>
+                    <h3 class="font-bold text-slate-800">Validasi Gerbang Depan (Tahap 2)</h3>
+                </div>
+                <button onclick="closeModal('modal-security-gate')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="mt-4 space-y-3">
+                <input type="hidden" id="security-target-id">
+                <div class="bg-emerald-50 border border-emerald-100 p-3.5 rounded-xl text-xs space-y-1.5 text-slate-700">
+                    <p><span class="text-slate-500 font-medium">Tiket:</span> <span id="sec-modal-ticket" class="font-bold text-emerald-800 font-mono"></span></p>
+                    <p><span class="text-slate-500 font-medium">Siswa:</span> <span id="sec-modal-student" class="font-bold text-slate-900"></span></p>
+                    <p><span class="text-slate-500 font-medium">Catatan Piket:</span> <span id="sec-modal-piket-note" class="italic text-slate-600"></span></p>
+                </div>
+
+                <div class="space-y-2 pt-1">
+                    <label class="block text-xs font-semibold text-slate-600">Informasi Penjemput / Kendaraan</label>
+                    <input type="text" id="sec-pickup-info" placeholder="Contoh: Dijemput Ibu (Motor Vario B 4321 SAA)" 
+                        class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500">
+                    
+                    <label class="flex items-center space-x-2 text-xs text-slate-700 cursor-pointer pt-1">
+                        <input type="checkbox" id="check-gate-open" checked class="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4">
+                        <span>Siswa sudah melewati gerbang & palang dibuka</span>
+                    </label>
+                </div>
+            </div>
+            <div class="mt-6 flex space-x-2">
+                <button onclick="closeModal('modal-security-gate')" class="w-1/3 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition">
+                    Batal
+                </button>
+                <button onclick="confirmSecurityAction()" class="w-2/3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-person-walking-arrow-right"></i>
+                    <span>Konfirmasi Keluar Sekolah</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: DIGITAL E-PASS / PRINTABLE PASS -->
+    <div id="modal-view-pass" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-50 rounded-full pointer-events-none"></div>
+            
+            <div class="flex items-center justify-between border-b border-dashed border-slate-200 pb-3">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-id-card text-blue-600"></i>
+                    <span class="text-xs font-bold tracking-wider text-slate-700">SURAT IZIN KELUAR ELEKTRONIK</span>
+                </div>
+                <button onclick="closeModal('modal-view-pass')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="print-pass-content" class="mt-4 text-center space-y-3">
+                <!-- Pass dynamic content -->
+            </div>
+
+            <div class="mt-6 pt-3 border-t border-dashed border-slate-200 flex justify-between gap-2">
+                <button onclick="closeModal('modal-view-pass')" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast Message Notification -->
+    <div id="toast-box" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="toast-inner" class="bg-slate-900 text-white text-xs px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-3 border border-slate-700">
+            <span id="toast-icon" class="text-emerald-400 text-base"><i class="fa-solid fa-circle-check"></i></span>
+            <span id="toast-text" class="font-medium">Pemberitahuan berhasil</span>
+        </div>
+    </div>
+
+    <script>
+        // In-Memory Storage for Demo with comprehensive mock records
+        let currentRole = 'siswa';
+        let activeStudentId = 'IZN-2026-001';
+
+        let requestsData = [
+            {
+                id: 'IZN-2026-001',
+                name: 'Muhammad Farhan',
+                nisn: '0062839120',
+                kelas: 'XII MIPA 1',
+                phone: '081288992211',
+                type: 'Izin Pulang (Sakit)',
+                reason: 'Sakit migrain dan pusing berat, suhu tubuh 38°C sejak jam istirahat pertama.',
+                timeRequested: '09:15 WIB',
+                status: 'MENUNGGU_SECURITY', // Sudah di acc guru piket, menuju security
+                parentConfirmed: true,
+                piketApprover: 'Drs. H. Hendra, M.Pd',
+                piketNote: 'Siswa sudah diistirahatkan di UKS, orang tua siap menjemput di gerbang.',
+                piketTime: '09:25 WIB',
+                securityApprover: null,
+                securityNote: null,
+                securityTime: null,
+                exitPlate: null
+            },
+            {
+                id: 'IZN-2026-002',
+                name: 'Siti Aisyah Wardani',
+                nisn: '0071928341',
+                kelas: 'XI MIPA 1',
+                phone: '085712349988',
+                type: 'Izin Keluar Sementara (Tugas/Dispensasi)',
+                reason: 'Dispensasi mewakili sekolah dalam babak final Olimpiade Sains di Universitas Negeri.',
+                timeRequested: '09:40 WIB',
+                status: 'MENUNGGU_GURU', // Masih di meja piket
+                parentConfirmed: false,
+                piketApprover: null,
+                piketNote: null,
+                piketTime: null,
+                securityApprover: null,
+                securityNote: null,
+                securityTime: null,
+                exitPlate: null
+            },
+            {
+                id: 'IZN-2026-003',
+                name: 'Bagas Aditya Pratama',
+                nisn: '0069912837',
+                kelas: 'XII IPS 1',
+                phone: '081399887766',
+                type: 'Izin Pulang (Keperluan Keluarga)',
+                reason: 'Ada acara keluarga mendesak (kakek meninggal dunia di luar kota).',
+                timeRequested: '08:10 WIB',
+                status: 'SELESAI_KELUAR', // Sudah keluar gerbang
+                parentConfirmed: true,
+                piketApprover: 'Drs. H. Hendra, M.Pd',
+                piketNote: 'Sudah diverifikasi surat pernyataan wali.',
+                piketTime: '08:20 WIB',
+                securityApprover: 'Sutrisno (Pos A)',
+                securityNote: 'Dijemput mobil keluarga Innova Hitam B 1902 KAA',
+                securityTime: '08:30 WIB',
+                exitPlate: 'B 1902 KAA'
+            }
+        ];
+
+        function updateLiveClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour12: false }) + ' WIB';
+            const clockEl = document.getElementById('live-time');
+            if (clockEl) clockEl.innerText = timeStr;
+        }
+        setInterval(updateLiveClock, 1000);
+        updateLiveClock();
+
+        // Toast Helper (replacing forbidden alert)
+        function showToast(message, isSuccess = true) {
+            const toastBox = document.getElementById('toast-box');
+            const toastText = document.getElementById('toast-text');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastText.innerText = message;
+            toastIcon.innerHTML = isSuccess 
+                ? '<i class="fa-solid fa-circle-check text-emerald-400"></i>' 
+                : '<i class="fa-solid fa-circle-exclamation text-amber-400"></i>';
+
+            toastBox.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toastBox.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 3200);
+        }
+
+        function switchRole(role) {
+            currentRole = role;
+            const views = ['siswa', 'piket', 'security', 'rekap'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                const btn = document.getElementById(`role-btn-${v}`);
+                if (v === role) {
+                    el.classList.remove('hidden');
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-white bg-blue-600 shadow-sm flex items-center gap-1.5";
+                } else {
+                    el.classList.add('hidden');
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1.5";
+                }
+            });
+
+            // Update Banner
+            const bannerTitle = document.getElementById('banner-title');
+            const bannerDesc = document.getElementById('banner-desc');
+            const bannerIcon = document.getElementById('banner-icon');
+
+            if (role === 'siswa') {
+                bannerTitle.innerText = "Portal Siswa: Pengajuan & Cek Tiket Izin";
+                bannerDesc.innerText = "Ajukan izin meninggalkan sekolah atau periksa status persetujuan surat jalan Anda.";
+                bannerIcon.innerHTML = '<i class="fa-solid fa-user-graduate"></i>';
+                renderSiswaActivePass();
+            } else if (role === 'piket') {
+                bannerTitle.innerText = "Portal Guru Piket: Verifikasi & Konfirmasi (Approval 1)";
+                bannerDesc.innerText = "Teliti alasan siswa, validasi konfirmasi orang tua via telepon, dan berikan persetujuan tahap pertama.";
+                bannerIcon.innerHTML = '<i class="fa-solid fa-clipboard-check"></i>';
+                renderPiketQueue();
+            } else if (role === 'security') {
+                bannerTitle.innerText = "Portal Satpam Gerbang Depan: Validasi Fisik Keluar (Approval 2)";
+                bannerDesc.innerText = "Cek QR/ID Tiket yang sudah disetujui Guru Piket sebelum membuka palang pintu keluar.";
+                bannerIcon.innerHTML = '<i class="fa-solid fa-shield-halved"></i>';
+                renderSecurityQueue();
+            } else if (role === 'rekap') {
+                bannerTitle.innerText = "Rekapitulasi & Log Audit Izin Sekolah";
+                bannerDesc.innerText = "Daftar histori lengkap seluruh proses perizinan siswa keluar dan pulang sekolah.";
+                bannerIcon.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i>';
+                renderRekapTable();
+            }
+
+            updateBadges();
+        }
+
+        function updateBadges() {
+            const piketPending = requestsData.filter(r => r.status === 'MENUNGGU_GURU').length;
+            const securityPending = requestsData.filter(r => r.status === 'MENUNGGU_SECURITY').length;
+
+            const badgePiket = document.getElementById('badge-piket');
+            const badgeSecurity = document.getElementById('badge-security');
+            if (badgePiket) badgePiket.innerText = piketPending;
+            if (badgeSecurity) badgeSecurity.innerText = securityPending;
+
+            // Stats on piket view
+            const statPending = document.getElementById('stat-piket-pending');
+            const statApproved = document.getElementById('stat-piket-approved');
+            const statRejected = document.getElementById('stat-piket-rejected');
+            if (statPending) statPending.innerText = piketPending;
+            if (statApproved) statApproved.innerText = requestsData.filter(r => r.status === 'MENUNGGU_SECURITY' || r.status === 'SELESAI_KELUAR').length;
+            if (statRejected) statRejected.innerText = requestsData.filter(r => r.status === 'DITOLAK').length;
+
+            const secReadyCount = document.getElementById('security-ready-count');
+            if (secReadyCount) secReadyCount.innerText = `${securityPending} Siap Keluar`;
+        }
+
+        function renderSiswaActivePass() {
+            const passContainer = document.getElementById('active-pass-container');
+            const currentItem = requestsData.find(r => r.id === activeStudentId) || requestsData[0];
+
+            if (!currentItem) {
+                passContainer.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">Belum ada pengajuan izin aktif.</div>`;
+                return;
+            }
+
+            document.getElementById('current-pass-id').innerText = currentItem.id;
+
+            // Compute status badge
+            let statusBadge = '';
+            let step1Class = 'step-active';
+            let step2Class = 'border-slate-300 text-slate-400';
+            let step3Class = 'border-slate-300 text-slate-400';
+
+            if (currentItem.status === 'MENUNGGU_GURU') {
+                statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">Menunggu Guru Piket</span>`;
+                step1Class = 'step-active pulse-subtle';
+            } else if (currentItem.status === 'MENUNGGU_SECURITY') {
+                statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800">Disetujui Piket • Ke Gerbang</span>`;
+                step1Class = 'step-done';
+                step2Class = 'step-active pulse-subtle';
+            } else if (currentItem.status === 'SELESAI_KELUAR') {
+                statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">Selesai • Sudah Keluar</span>`;
+                step1Class = 'step-done';
+                step2Class = 'step-done';
+                step3Class = 'step-done';
+            } else if (currentItem.status === 'DITOLAK') {
+                statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800">Izin Ditolak</span>`;
+                step1Class = 'bg-rose-500 border-rose-500 text-white';
+            }
+
+            passContainer.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-base">${currentItem.name}</h4>
+                            <p class="text-xs text-slate-500">${currentItem.kelas} • NISN: ${currentItem.nisn}</p>
+                        </div>
+                        ${statusBadge}
+                    </div>
+
+                    <!-- Progress Step Tracker -->
+                    <div class="py-2">
+                        <div class="flex items-center justify-between relative">
+                            <div class="absolute left-4 right-4 top-1/2 -translate-y-1/2 h-0.5 bg-slate-200 z-0"></div>
+                            
+                            <!-- Step 1 -->
+                            <div class="relative z-10 flex flex-col items-center">
+                                <div class="w-8 h-8 rounded-full border-2 bg-white flex items-center justify-center text-xs font-bold ${step1Class}">
+                                    ${currentItem.status !== 'MENUNGGU_GURU' && currentItem.status !== 'DITOLAK' ? '<i class="fa-solid fa-check"></i>' : '1'}
+                                </div>
+                                <span class="text-[10px] font-semibold mt-1 text-slate-600">Guru Piket</span>
+                            </div>
+
+                            <!-- Step 2 -->
+                            <div class="relative z-10 flex flex-col items-center">
+                                <div class="w-8 h-8 rounded-full border-2 bg-white flex items-center justify-center text-xs font-bold ${step2Class}">
+                                    ${currentItem.status === 'SELESAI_KELUAR' ? '<i class="fa-solid fa-check"></i>' : '2'}
+                                </div>
+                                <span class="text-[10px] font-semibold mt-1 text-slate-600">Security Gate</span>
+                            </div>
+
+                            <!-- Step 3 -->
+                            <div class="relative z-10 flex flex-col items-center">
+                                <div class="w-8 h-8 rounded-full border-2 bg-white flex items-center justify-center text-xs font-bold ${step3Class}">
+                                    <i class="fa-solid fa-door-open"></i>
+                                </div>
+                                <span class="text-[10px] font-semibold mt-1 text-slate-600">Keluar</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ticket Details -->
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Jenis Izin:</span>
+                            <span class="font-semibold text-slate-700">${currentItem.type}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Jam Pengajuan:</span>
+                            <span class="font-semibold text-slate-700">${currentItem.timeRequested}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Alasan:</span>
+                            <span class="font-medium text-slate-700 text-right max-w-[200px] truncate">${currentItem.reason}</span>
+                        </div>
+                        ${currentItem.piketApprover ? `
+                        <div class="pt-2 border-t border-slate-200/60 flex justify-between">
+                            <span class="text-slate-400">Persetujuan Piket:</span>
+                            <span class="font-semibold text-emerald-700">${currentItem.piketApprover} (${currentItem.piketTime})</span>
+                        </div>
+                        ` : ''}
+                        ${currentItem.securityApprover ? `
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Checkout Gerbang:</span>
+                            <span class="font-semibold text-blue-700">${currentItem.securityApprover} (${currentItem.securityTime})</span>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- Action: Lihat Pass Digital -->
+                    <button onclick="openDigitalPassModal('${currentItem.id}')" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-qrcode"></i>
+                        <span>Buka QR Pass / Kartu Izin Digital</span>
+                    </button>
+                </div>
+            `;
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('input-nama').value.trim();
+            const nisn = document.getElementById('input-nisn').value.trim();
+            const kelas = document.getElementById('input-kelas').value;
+            const type = document.getElementById('input-jenis').value;
+            const phone = document.getElementById('input-nohp').value.trim();
+            const reason = document.getElementById('input-alasan').value.trim();
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+            const newId = `IZN-${now.getFullYear()}-` + String(requestsData.length + 1).padStart(3, '0');
+
+            const newRecord = {
+                id: newId,
+                name,
+                nisn,
+                kelas,
+                phone,
+                type,
+                reason,
+                timeRequested: timeStr,
+                status: 'MENUNGGU_GURU',
+                parentConfirmed: false,
+                piketApprover: null,
+                piketNote: null,
+                piketTime: null,
+                securityApprover: null,
+                securityNote: null,
+                securityTime: null,
+                exitPlate: null
+            };
+
+            requestsData.unshift(newRecord);
+            activeStudentId = newId;
+
+            // Reset form
+            document.getElementById('form-izin').reset();
+
+            showToast(`Permohonan ${newId} berhasil dikirim ke Guru Piket!`);
+            renderSiswaActivePass();
+            updateBadges();
+        }
+
+        function renderPiketQueue() {
+            const container = document.getElementById('piket-queue-container');
+            const pendingList = requestsData.filter(r => r.status === 'MENUNGGU_GURU');
+
+            if (pendingList.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto text-xl mb-2">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-700 text-sm">Tidak ada antrean pending</h4>
+                        <p class="text-xs text-slate-400">Semua permohonan izin telah diverifikasi.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = pendingList.map(item => `
+                <div class="p-5 hover:bg-slate-50/70 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="space-y-1.5 flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700">${item.id}</span>
+                            <span class="text-xs font-bold text-slate-900">${item.name}</span>
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">${item.kelas}</span>
+                            <span class="text-[11px] text-slate-400">• ${item.timeRequested}</span>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-700">${item.type}</p>
+                        <p class="text-xs text-slate-600 bg-white p-2 rounded-lg border border-slate-100 inline-block max-w-xl">
+                            <i class="fa-solid fa-quote-left text-slate-300 text-[10px] mr-1"></i>${item.reason}
+                        </p>
+                        <div class="flex items-center gap-3 pt-1 text-xs">
+                            <a href="https://wa.me/${item.phone.replace(/[^0-9]/g, '')}" target="_blank" class="text-emerald-600 hover:underline flex items-center gap-1 font-medium">
+                                <i class="fa-brands fa-whatsapp"></i> Hubungi Ortu (${item.phone})
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openPiketModal('${item.id}')" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-clipboard-check"></i>
+                            <span>Tinjau & Setujui</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openPiketModal(id) {
+            const item = requestsData.find(r => r.id === id);
+            if (!item) return;
+
+            document.getElementById('piket-target-id').value = id;
+            document.getElementById('modal-piket-student').innerText = `${item.name} (${item.kelas})`;
+            document.getElementById('modal-piket-reason').innerText = item.reason;
+            document.getElementById('modal-piket-parent').innerText = item.phone;
+            document.getElementById('check-parent-confirmed').checked = false;
+            document.getElementById('piket-note-input').value = '';
+
+            document.getElementById('modal-piket-approve').classList.remove('hidden');
+        }
+
+        function confirmPiketAction(type) {
+            const id = document.getElementById('piket-target-id').value;
+            const officer = document.getElementById('officer-piket-name').value || 'Guru Piket';
+            const note = document.getElementById('piket-note-input').value.trim();
+            const parentConfirmed = document.getElementById('check-parent-confirmed').checked;
+
+            const idx = requestsData.findIndex(r => r.id === id);
+            if (idx === -1) return;
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+
+            if (type === 'APPROVE') {
+                requestsData[idx].status = 'MENUNGGU_SECURITY';
+                requestsData[idx].piketApprover = officer;
+                requestsData[idx].piketNote = note || (parentConfirmed ? 'Disetujui. Sudah konfirmasi orang tua.' : 'Disetujui.');
+                requestsData[idx].piketTime = timeStr;
+                requestsData[idx].parentConfirmed = parentConfirmed;
+                showToast(`Izin ${id} disetujui Guru Piket. Diteruskan ke Security Gerbang!`);
+            } else {
+                requestsData[idx].status = 'DITOLAK';
+                requestsData[idx].piketApprover = officer;
+                requestsData[idx].piketNote = note || 'Tidak disetujui guru piket.';
+                requestsData[idx].piketTime = timeStr;
+                showToast(`Izin ${id} ditolak.`, false);
+            }
+
+            closeModal('modal-piket-approve');
+            renderPiketQueue();
+            updateBadges();
+            if (id === activeStudentId) renderSiswaActivePass();
+        }
+
+        function renderSecurityQueue() {
+            const container = document.getElementById('security-queue-container');
+            const searchKeyword = (document.getElementById('security-search')?.value || '').toLowerCase();
+            
+            let list = requestsData.filter(r => r.status === 'MENUNGGU_SECURITY');
+            if (searchKeyword) {
+                list = list.filter(r => 
+                    r.name.toLowerCase().includes(searchKeyword) ||
+                    r.id.toLowerCase().includes(searchKeyword) ||
+                    r.kelas.toLowerCase().includes(searchKeyword)
+                );
+            }
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-xl mb-2">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-700 text-sm">Tidak ada siswa menunggu di gerbang</h4>
+                        <p class="text-xs text-slate-400">Siswa yang disetujui Guru Piket akan muncul otomatis di sini.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = list.map(item => `
+                <div class="p-5 hover:bg-slate-50 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="space-y-1.5 flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">${item.id}</span>
+                            <span class="text-sm font-bold text-slate-900">${item.name}</span>
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">${item.kelas}</span>
+                        </div>
+                        <p class="text-xs text-slate-600"><span class="font-semibold text-slate-800">Alasan:</span> ${item.type} - ${item.reason}</p>
+                        <div class="bg-blue-50/70 p-2 rounded-lg text-xs text-blue-900 flex items-center gap-2 border border-blue-100">
+                            <i class="fa-solid fa-signature text-blue-500"></i>
+                            <span>Disetujui Guru Piket: <b>${item.piketApprover}</b> pada ${item.piketTime} (${item.piketNote})</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="openDigitalPassModal('${item.id}')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-qrcode"></i>
+                            <span>Scan / QR</span>
+                        </button>
+                        <button onclick="openSecurityModal('${item.id}')" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-person-walking-dashed-line-arrow-right"></i>
+                            <span>Buka Gerbang & Checkout</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterSecurityList() {
+            renderSecurityQueue();
+        }
+
+        function openSecurityModal(id) {
+            const item = requestsData.find(r => r.id === id);
+            if (!item) return;
+
+            document.getElementById('security-target-id').value = id;
+            document.getElementById('sec-modal-ticket').innerText = item.id;
+            document.getElementById('sec-modal-student').innerText = `${item.name} (${item.kelas})`;
+            document.getElementById('sec-modal-piket-note').innerText = `"${item.piketNote || 'Disetujui'}"`;
+            document.getElementById('sec-pickup-info').value = '';
+
+            document.getElementById('modal-security-gate').classList.remove('hidden');
+        }
+
+        function confirmSecurityAction() {
+            const id = document.getElementById('security-target-id').value;
+            const officer = document.getElementById('officer-security-name').value || 'Satpam Gerbang';
+            const pickupInfo = document.getElementById('sec-pickup-info').value.trim();
+
+            const idx = requestsData.findIndex(r => r.id === id);
+            if (idx === -1) return;
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+
+            requestsData[idx].status = 'SELESAI_KELUAR';
+            requestsData[idx].securityApprover = officer;
+            requestsData[idx].securityNote = pickupInfo || 'Siswa keluar gerbang utama.';
+            requestsData[idx].securityTime = timeStr;
+
+            closeModal('modal-security-gate');
+            showToast(`Siswa ${requestsData[idx].name} telah diverifikasi keluar gerbang!`);
+            renderSecurityQueue();
+            updateBadges();
+            if (id === activeStudentId) renderSiswaActivePass();
+        }
+
+        function renderRekapTable() {
+            const tbody = document.getElementById('rekap-table-body');
+            const search = (document.getElementById('rekap-search')?.value || '').toLowerCase();
+            const statusFilter = document.getElementById('rekap-filter-status')?.value || 'ALL';
+            const jenisFilter = document.getElementById('rekap-filter-jenis')?.value || 'ALL';
+
+            let filtered = [...requestsData];
+
+            if (statusFilter !== 'ALL') {
+                filtered = filtered.filter(r => r.status === statusFilter);
+            }
+
+            if (jenisFilter !== 'ALL') {
+                filtered = filtered.filter(r => r.type.toLowerCase().includes(jenisFilter.toLowerCase()));
+            }
+
+            if (search) {
+                filtered = filtered.filter(r => 
+                    r.name.toLowerCase().includes(search) ||
+                    r.id.toLowerCase().includes(search) ||
+                    r.kelas.toLowerCase().includes(search) ||
+                    r.reason.toLowerCase().includes(search)
+                );
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 text-xs">Tidak ada data izin yang sesuai kriteria.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(item => {
+                let badge = '';
+                if (item.status === 'MENUNGGU_GURU') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Menunggu Piket</span>';
+                else if (item.status === 'MENUNGGU_SECURITY') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">Piket OK (Di Gerbang)</span>';
+                else if (item.status === 'SELESAI_KELUAR') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Selesai (Keluar)</span>';
+                else if (item.status === 'DITOLAK') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">Ditolak</span>';
+
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 font-mono font-bold text-slate-700">${item.id}</td>
+                        <td class="p-3">
+                            <p class="font-bold text-slate-800">${item.name}</p>
+                            <p class="text-[11px] text-slate-400">${item.kelas} • ${item.timeRequested}</p>
+                        </td>
+                        <td class="p-3">
+                            <p class="font-semibold text-slate-700">${item.type}</p>
+                            <p class="text-[11px] text-slate-500 truncate max-w-xs">${item.reason}</p>
+                        </td>
+                        <td class="p-3">
+                            ${item.piketApprover ? `
+                                <span class="font-semibold text-slate-800">${item.piketApprover}</span>
+                                <p class="text-[10px] text-emerald-600">${item.piketTime}</p>
+                            ` : '<span class="text-slate-300 italic">Belum diverifikasi</span>'}
+                        </td>
+                        <td class="p-3">
+                            ${item.securityApprover ? `
+                                <span class="font-semibold text-slate-800">${item.securityApprover}</span>
+                                <p class="text-[10px] text-blue-600">${item.securityTime}</p>
+                            ` : '<span class="text-slate-300 italic">-</span>'}
+                        </td>
+                        <td class="p-3">${badge}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="openDigitalPassModal('${item.id}')" class="p-1.5 text-slate-500 hover:text-blue-600 transition" title="Lihat E-Pass">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openDigitalPassModal(id) {
+            const item = requestsData.find(r => r.id === id);
+            if (!item) return;
+
+            const modal = document.getElementById('modal-view-pass');
+            const container = document.getElementById('print-pass-content');
+
+            container.innerHTML = `
+                <div class="border-2 border-dashed border-slate-200 p-4 rounded-2xl bg-slate-50 relative">
+                    <h2 class="font-bold text-slate-800 text-sm">SMA NEGERI 1</h2>
+                    <p class="text-[10px] text-slate-400 tracking-wider">GATE PASS PERIZINAN SISWA</p>
+                    
+                    <div class="my-3 flex justify-center">
+                        <div id="qrcode-box" class="p-2 bg-white rounded-xl shadow-sm border border-slate-100"></div>
+                    </div>
+
+                    <div class="space-y-1 text-xs">
+                        <div class="font-mono text-sm font-bold text-blue-700">${item.id}</div>
+                        <div class="font-bold text-slate-800 text-base">${item.name}</div>
+                        <div class="text-slate-500">${item.kelas} • NISN: ${item.nisn}</div>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-t border-slate-200 text-left text-xs space-y-1">
+                        <div class="flex justify-between"><span class="text-slate-400">Keperluan:</span> <span class="font-semibold text-slate-700">${item.type}</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Guru Piket:</span> <span class="font-semibold ${item.piketApprover ? 'text-emerald-700' : 'text-amber-600'}">${item.piketApprover || 'Menunggu'}</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Security Gate:</span> <span class="font-semibold ${item.securityApprover ? 'text-blue-700' : 'text-slate-400'}">${item.securityApprover || 'Menunggu Scan'}</span></div>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+
+            // Generate QR Code dynamic
+            setTimeout(() => {
+                const qrBox = document.getElementById('qrcode-box');
+                if (qrBox) {
+                    qrBox.innerHTML = '';
+                    new QRCode(qrBox, {
+                        text: `PASSSMA1:${item.id}:${item.nisn}:${item.status}`,
+                        width: 120,
+                        height: 120,
+                        colorDark: "#1e293b",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                }
+            }, 50);
+        }
+
+        function closeModal(modalId) {
+            const el = document.getElementById(modalId);
+            if (el) el.classList.add('hidden');
+        }
+
+        function exportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "ID,Nama,Kelas,NISN,No_Ortu,Jenis_Izin,Alasan,Jam_Diajukan,Guru_Piket,Jam_Piket,Security,Jam_Security,Status\n";
+
+            requestsData.forEach(r => {
+                const row = [
+                    r.id,
+                    `"${r.name}"`,
+                    `"${r.kelas}"`,
+                    r.nisn,
+                    r.phone,
+                    `"${r.type}"`,
+                    `"${r.reason.replace(/"/g, '""')}"`,
+                    r.timeRequested,
+                    `"${r.piketApprover || '-'}"`,
+                    `"${r.piketTime || '-'}"`,
+                    `"${r.securityApprover || '-'}"`,
+                    `"${r.securityTime || '-'}"`,
+                    r.status
+                ].join(",");
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Rekap_Izin_Siswa_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("File CSV berhasil diexport!");
+        }
+
+        function printFilteredReport() {
+            window.print();
+        }
+
+        // Initialize default view
+        window.addEventListener('DOMContentLoaded', () => {
+            switchRole('siswa');
+        });
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>E-Izin SMA - Sistem Izin Keluar & Pulang Siswa</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -10,6 +10,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- QR Code Generator CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- HTML5 QR Code Scanner CDN for Mobile Cameras -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    
     <script>
         tailwind.config = {
             theme: {
@@ -25,6 +28,7 @@
                             900: '#1e3a8a',
                         },
                         emerald: {
+                            500: '#10b981',
                             600: '#059669',
                             700: '#047857',
                         }
@@ -38,6 +42,7 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
         }
         .step-active {
             border-color: #2563eb;
@@ -48,12 +53,22 @@
             border-color: #10b981;
             color: white;
         }
-        .pulse-subtle {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        /* Laser scanning animation for camera overlay */
+        @keyframes scanLaser {
+            0% { top: 4%; opacity: 0.3; }
+            50% { top: 92%; opacity: 1; }
+            100% { top: 4%; opacity: 0.3; }
         }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .7; }
+        .laser-line {
+            animation: scanLaser 2.2s ease-in-out infinite;
+            box-shadow: 0 0 12px #10b981, 0 0 20px #34d399;
+        }
+        /* Custom video viewport styling for html5-qrcode */
+        #qr-camera-reader video {
+            object-fit: cover !important;
+            border-radius: 1rem !important;
+            width: 100% !important;
+            height: 100% !important;
         }
     </style>
 </head>
@@ -61,38 +76,37 @@
 
     <!-- Top Header & Role Switcher -->
     <header class="bg-primary-900 text-white shadow-md sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <!-- Logo & Brand -->
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-inner font-bold text-xl">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-inner font-bold text-lg">
                         <i class="fa-solid fa-graduation-cap"></i>
                     </div>
                     <div>
-                        <h1 class="text-lg font-bold tracking-tight">E-IZIN SMA NEGERI 1</h1>
-                        <p class="text-xs text-blue-200">Sistem Perizinan Keluar & Pulang Bertingkat</p>
+                        <h1 class="text-sm sm:text-base font-bold tracking-tight">E-IZIN SMA NEGERI 1</h1>
+                        <p class="text-[10px] sm:text-xs text-blue-200">Sistem Perizinan Keluar 2-Pintu</p>
                     </div>
                 </div>
 
                 <!-- Fast Role Switcher -->
-                <div class="flex items-center space-x-2">
-                    <span class="text-xs text-blue-200 hidden sm:inline">Peran Aktif:</span>
+                <div class="flex items-center space-x-1 sm:space-x-2">
                     <div class="inline-flex bg-primary-800 p-1 rounded-xl border border-blue-700/50">
-                        <button onclick="switchRole('siswa')" id="role-btn-siswa" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-white bg-blue-600 shadow-sm flex items-center gap-1.5">
+                        <button onclick="switchRole('siswa')" id="role-btn-siswa" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-white bg-blue-600 shadow-sm flex items-center gap-1.5">
                             <i class="fa-solid fa-user-graduate"></i>
                             <span class="hidden md:inline">Siswa</span>
                         </button>
-                        <button onclick="switchRole('piket')" id="role-btn-piket" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1.5">
+                        <button onclick="switchRole('piket')" id="role-btn-piket" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1">
                             <i class="fa-solid fa-clipboard-check"></i>
                             <span class="hidden md:inline">Guru Piket</span>
-                            <span id="badge-piket" class="ml-1 bg-amber-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+                            <span id="badge-piket" class="ml-0.5 bg-amber-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
                         </button>
-                        <button onclick="switchRole('security')" id="role-btn-security" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1.5">
+                        <button onclick="switchRole('security')" id="role-btn-security" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1">
                             <i class="fa-solid fa-shield-halved"></i>
-                            <span class="hidden md:inline">Security Gerbang</span>
-                            <span id="badge-security" class="ml-1 bg-emerald-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+                            <span class="hidden md:inline">Security</span>
+                            <span id="badge-security" class="ml-0.5 bg-emerald-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
                         </button>
-                        <button onclick="switchRole('rekap')" id="role-btn-rekap" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1.5">
+                        <button onclick="switchRole('rekap')" id="role-btn-rekap" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1">
                             <i class="fa-solid fa-clock-rotate-left"></i>
                             <span class="hidden md:inline">Rekap</span>
                         </button>
@@ -102,19 +116,19 @@
         </div>
     </header>
 
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <main class="flex-grow max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
         <!-- Dynamic Role Banner Notice -->
-        <div id="role-banner" class="mb-6 p-4 rounded-2xl bg-blue-50 border border-blue-200/70 flex items-center justify-between">
+        <div id="role-banner" class="mb-5 p-3.5 sm:p-4 rounded-2xl bg-blue-50 border border-blue-200/70 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div id="banner-icon" class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg">
+                <div id="banner-icon" class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg shrink-0">
                     <i class="fa-solid fa-user-graduate"></i>
                 </div>
                 <div>
-                    <h2 id="banner-title" class="font-bold text-slate-800 text-sm sm:text-base">Portal Siswa: Pengajuan & Cek Tiket Izin</h2>
-                    <p id="banner-desc" class="text-xs text-slate-500">Ajukan izin meninggalkan sekolah atau periksa status tiket keluar Anda.</p>
+                    <h2 id="banner-title" class="font-bold text-slate-800 text-xs sm:text-sm md:text-base">Portal Siswa: Pengajuan & Cek Tiket Izin</h2>
+                    <p id="banner-desc" class="text-[11px] sm:text-xs text-slate-500">Ajukan izin meninggalkan sekolah atau periksa status tiket keluar Anda.</p>
                 </div>
             </div>
-            <div class="text-right hidden sm:block">
+            <div class="text-right hidden sm:block shrink-0">
                 <span id="live-time" class="text-xs font-semibold px-3 py-1 bg-white rounded-full border border-blue-200 text-blue-800">
                     --:--:-- WIB
                 </span>
@@ -125,28 +139,28 @@
         <div id="view-siswa" class="space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <!-- Form Pengajuan -->
-                <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+                <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-4">
                         <div class="flex items-center space-x-2.5">
-                            <span class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-file-signature"></i></span>
-                            <h3 class="font-bold text-slate-800">Formulir Permohonan Izin</h3>
+                            <span class="p-2 bg-blue-50 text-blue-600 rounded-lg text-sm"><i class="fa-solid fa-file-signature"></i></span>
+                            <h3 class="font-bold text-slate-800 text-sm sm:text-base">Formulir Permohonan Izin</h3>
                         </div>
-                        <span class="text-xs text-slate-400">*Wajib mengisi data valid</span>
+                        <span class="text-[11px] text-slate-400">*Wajib data valid</span>
                     </div>
 
                     <form id="form-izin" onsubmit="handleFormSubmit(event)" class="space-y-4">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nama Lengkap Siswa</label>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Lengkap Siswa</label>
                                 <input type="text" id="input-nama" required placeholder="Contoh: Muhammad Farhan" 
-                                    class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                    class="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">NISN / Kelas</label>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">NISN & Kelas</label>
                                 <div class="grid grid-cols-2 gap-2">
                                     <input type="text" id="input-nisn" required placeholder="NISN: 006..." 
-                                        class="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <select id="input-kelas" required class="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                        class="w-full px-3 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <select id="input-kelas" required class="w-full px-2.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                                         <option value="X-1">X-1</option>
                                         <option value="X-2">X-2</option>
                                         <option value="XI MIPA 1">XI MIPA 1</option>
@@ -158,33 +172,33 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Jenis Izin</label>
-                                <select id="input-jenis" required class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Jenis Izin</label>
+                                <select id="input-jenis" required class="w-full px-3 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                                     <option value="Izin Pulang (Sakit)">Izin Pulang - Sakit</option>
-                                    <option value="Izin Pulang (Keperluan Keluarga)">Izin Pulang - Keperluan Keluarga Mendesak</option>
-                                    <option value="Izin Keluar Sementara (Tugas/Dispensasi)">Izin Keluar Sementara (Dispensasi/Lomba)</option>
-                                    <option value="Izin Keluar Sementara (Keperluan Singkat)">Izin Keluar Sementara (Fotokopi/Beli Obat)</option>
+                                    <option value="Izin Pulang (Keperluan Keluarga)">Izin Pulang - Urusan Keluarga</option>
+                                    <option value="Izin Keluar Sementara (Tugas/Dispensasi)">Izin Sementara - Lomba / Tugas</option>
+                                    <option value="Izin Keluar Sementara (Keperluan Singkat)">Izin Sementara - Fotokopi / Obat</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">No. WhatsApp Orang Tua/Wali</label>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">No. WhatsApp Orang Tua/Wali</label>
                                 <input type="tel" id="input-nohp" required placeholder="081234567890" 
-                                    class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    class="w-full px-3 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Alasan Detail Permohonan</label>
-                            <textarea id="input-alasan" rows="3" required placeholder="Jelaskan alasan rinci mengapa harus izin keluar..." 
-                                class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Alasan Detail Permohonan</label>
+                            <textarea id="input-alasan" rows="3" required placeholder="Jelaskan secara rinci alasan izin keluar/pulang sekolah..." 
+                                class="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                         </div>
 
-                        <div class="pt-2">
-                            <button type="submit" class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-md hover:shadow-lg transition flex items-center justify-center space-x-2">
+                        <div class="pt-1">
+                            <button type="submit" class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm shadow-md transition flex items-center justify-center space-x-2">
                                 <i class="fa-solid fa-paper-plane"></i>
-                                <span>Kirim Permohonan Izin</span>
+                                <span>Kirim Permohonan Izin ke Guru Piket</span>
                             </button>
                         </div>
                     </form>
@@ -192,14 +206,14 @@
 
                 <!-- Status Tiket Aktif / E-Pass Siswa -->
                 <div class="lg:col-span-5 space-y-4">
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between h-full">
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 flex flex-col justify-between h-full">
                         <div>
                             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                                 <div class="flex items-center space-x-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-                                    <h3 class="font-bold text-slate-800 text-sm">Tiket Izin Terakhir Anda</h3>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <h3 class="font-bold text-slate-800 text-xs sm:text-sm">Tiket Izin Anda Saat Ini</h3>
                                 </div>
-                                <span id="current-pass-id" class="text-xs font-mono font-bold bg-slate-100 px-2.5 py-1 rounded-md text-slate-600">
+                                <span id="current-pass-id" class="text-[11px] font-mono font-bold bg-slate-100 px-2.5 py-1 rounded-md text-slate-600">
                                     IZN-2026-001
                                 </span>
                             </div>
@@ -209,15 +223,15 @@
                             </div>
                         </div>
 
-                        <!-- Info Card -->
-                        <div class="mt-6 bg-amber-50 rounded-xl p-3.5 border border-amber-200/70 text-xs text-amber-900 flex items-start space-x-2.5">
-                            <i class="fa-solid fa-circle-info text-amber-600 mt-0.5 text-sm"></i>
+                        <!-- Info Card Prosedur -->
+                        <div class="mt-5 bg-amber-50 rounded-xl p-3 border border-amber-200/70 text-xs text-amber-900 flex items-start space-x-2.5">
+                            <i class="fa-solid fa-circle-info text-amber-600 mt-0.5 text-sm shrink-0"></i>
                             <div>
-                                <span class="font-bold">Prosedur Keluar Sekolah:</span>
-                                <ol class="list-decimal ml-4 mt-1 space-y-0.5 text-amber-800">
-                                    <li>Minta konfirmasi & TTD/Approve Guru Piket.</li>
-                                    <li>Tunjukkan QR/Tiket ke Satpam di gerbang depan.</li>
-                                    <li>Satpam memverifikasi dan mencatat waktu keluar.</li>
+                                <span class="font-bold text-[11px] sm:text-xs">Alur Perizinan Gerbang:</span>
+                                <ol class="list-decimal ml-3.5 mt-1 space-y-0.5 text-[11px] text-amber-800">
+                                    <li>Konfirmasi alasan & TTD ke <b>Guru Piket</b>.</li>
+                                    <li>Buka <b>QR Pass</b> di HP Anda.</li>
+                                    <li>Tunjukkan QR ke <b>Security Gerbang</b> untuk dipindai (*scan*).</li>
                                 </ol>
                             </div>
                         </div>
@@ -227,33 +241,33 @@
         </div>
 
         <!-- VIEW 2: PORTAL GURU PIKET -->
-        <div id="view-piket" class="hidden space-y-6">
+        <div id="view-piket" class="hidden space-y-5">
             <!-- Summary Stats for Guru Piket -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <div>
-                        <p class="text-xs font-semibold text-slate-500">Menunggu Verifikasi Piket</p>
+                        <p class="text-xs font-semibold text-slate-500">Menunggu Guru Piket</p>
                         <h4 id="stat-piket-pending" class="text-2xl font-bold text-amber-600 mt-1">0</h4>
                     </div>
-                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                    <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg">
                         <i class="fa-solid fa-hourglass-half"></i>
                     </div>
                 </div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <div>
                         <p class="text-xs font-semibold text-slate-500">Disetujui Hari Ini</p>
                         <h4 id="stat-piket-approved" class="text-2xl font-bold text-blue-600 mt-1">0</h4>
                     </div>
-                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                    <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg">
                         <i class="fa-solid fa-user-check"></i>
                     </div>
                 </div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <div>
                         <p class="text-xs font-semibold text-slate-500">Ditolak / Batal</p>
                         <h4 id="stat-piket-rejected" class="text-2xl font-bold text-rose-600 mt-1">0</h4>
                     </div>
-                    <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl">
+                    <div class="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg">
                         <i class="fa-solid fa-ban"></i>
                     </div>
                 </div>
@@ -261,14 +275,14 @@
 
             <!-- Queue List -->
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
-                        <h3 class="font-bold text-slate-800 text-base">Antrean Pengajuan Izin Siswa (Tahap 1)</h3>
-                        <p class="text-xs text-slate-500">Periksa alasan siswa dan pastikan telah mengonfirmasi orang tua jika sakit/pulang.</p>
+                        <h3 class="font-bold text-slate-800 text-sm sm:text-base">Antrean Izin Masuk ke Guru Piket (Approval 1)</h3>
+                        <p class="text-xs text-slate-500">Periksa alasan siswa dan hubungi orang tua jika diperlukan izin pulang.</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-xs text-slate-400">Nama Petugas:</span>
-                        <input type="text" id="officer-piket-name" value="Drs. H. Hendra, M.Pd" class="px-2.5 py-1 text-xs border rounded-lg font-medium bg-slate-50 text-slate-700">
+                        <span class="text-xs text-slate-400">Guru Piket:</span>
+                        <input type="text" id="officer-piket-name" value="Drs. H. Hendra, M.Pd" class="px-2.5 py-1 text-xs border rounded-lg font-semibold bg-slate-50 text-slate-700">
                     </div>
                 </div>
 
@@ -278,42 +292,53 @@
             </div>
         </div>
 
-        <!-- VIEW 3: PORTAL SECURITY GERBANG -->
-        <div id="view-security" class="hidden space-y-6">
+        <!-- VIEW 3: PORTAL SECURITY GERBANG DEPAN -->
+        <div id="view-security" class="hidden space-y-5">
             <!-- Security Gate Quick Verification Card -->
-            <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-md">
+            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-5 sm:p-6 rounded-3xl shadow-lg border border-slate-700/60">
                 <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-400 flex items-center justify-center text-2xl">
-                            <i class="fa-solid fa-torii-gate"></i>
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-400 flex items-center justify-center text-2xl shrink-0">
+                            <i class="fa-solid fa-shield-halved"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-bold">Pos Security Gerbang Utama (Tahap 2)</h3>
-                            <p class="text-xs text-slate-300">Validasi fisik tiket siswa sebelum membuka palang pintu / gerbang sekolah.</p>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-base sm:text-lg font-bold text-white">Pos Gerbang Utama (Approval 2)</h3>
+                                <span class="bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Gate Scanner</span>
+                            </div>
+                            <p class="text-xs text-slate-300">Pindai QR code di HP siswa dengan kamera HP pos untuk checkout gerbang.</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3 w-full md:w-auto">
-                        <div class="relative w-full md:w-64">
-                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-                            <input type="text" id="security-search" oninput="filterSecurityList()" placeholder="Ketik Kode Tiket / Nama..." 
-                                class="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                    
+                    <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+                        <!-- SCAN BUTTON PROMINENT -->
+                        <button onclick="openScannerModal()" class="w-full sm:w-auto px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition active:scale-95">
+                            <i class="fa-solid fa-qrcode text-base"></i>
+                            <span>Scan QR Kamera HP</span>
+                        </button>
+                        
+                        <div class="relative flex-grow sm:flex-grow-0 sm:w-48">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                            <input type="text" id="security-search" oninput="filterSecurityList()" placeholder="Cari Siswa/Tiket..." 
+                                class="w-full pl-8 pr-3 py-2 text-xs rounded-xl bg-slate-800/90 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400">
                         </div>
+
                         <div class="flex items-center gap-1.5 text-xs text-slate-300">
-                            <span>Petugas:</span>
-                            <input type="text" id="officer-security-name" value="Sutrisno (Pos A)" class="px-2 py-1 text-xs rounded-lg bg-slate-800 border border-slate-700 text-emerald-400 font-medium">
+                            <span class="text-[11px] text-slate-400">Satpam:</span>
+                            <input type="text" id="officer-security-name" value="Sutrisno (Pos A)" class="px-2 py-1 text-xs rounded-lg bg-slate-800 border border-slate-700 text-emerald-400 font-semibold w-32">
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- List of approved by Teacher, Waiting at Gate -->
+            <!-- List of students approved by Teacher, Ready at Gate -->
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
                     <div>
-                        <h3 class="font-bold text-slate-800">Siswa Siap Keluar Gerbang (Disetujui Guru Piket)</h3>
-                        <p class="text-xs text-slate-500">Siswa pada daftar ini telah mendapat persetujuan Guru Piket dan berhak meninggalkan area sekolah.</p>
+                        <h3 class="font-bold text-slate-800 text-sm sm:text-base">Siswa Siap Keluar (Telah Disetujui Guru Piket)</h3>
+                        <p class="text-xs text-slate-500">Arahkan kamera HP ke QR siswa atau klik tombol verifikasi di bawah.</p>
                     </div>
-                    <span id="security-ready-count" class="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full">
+                    <span id="security-ready-count" class="px-3 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full">
                         0 Siap Keluar
                     </span>
                 </div>
@@ -325,11 +350,11 @@
         </div>
 
         <!-- VIEW 4: REKAPITULASI & LOG LENGKAP -->
-        <div id="view-rekap" class="hidden space-y-6">
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
+        <div id="view-rekap" class="hidden space-y-5">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-4">
                     <div>
-                        <h3 class="font-bold text-slate-800 text-base">Riwayat & Log Izin Keluar Sekolah</h3>
+                        <h3 class="font-bold text-slate-800 text-sm sm:text-base">Riwayat & Log Izin Keluar Sekolah</h3>
                         <p class="text-xs text-slate-500">Audit trail lengkap alur persetujuan Guru Piket dan Security Gerbang.</p>
                     </div>
                     <div class="flex items-center gap-2">
@@ -339,40 +364,40 @@
                         </button>
                         <button onclick="printFilteredReport()" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
                             <i class="fa-solid fa-print"></i>
-                            <span>Cetak Rekap</span>
+                            <span>Cetak Laporan</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Filter Controls -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                    <input type="text" id="rekap-search" oninput="renderRekapTable()" placeholder="Cari nama siswa, kelas, kode tiket..." 
-                        class="px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500">
-                    <select id="rekap-filter-status" onchange="renderRekapTable()" class="px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-white">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4">
+                    <input type="text" id="rekap-search" oninput="renderRekapTable()" placeholder="Cari nama, kelas, tiket..." 
+                        class="px-3 py-2 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500">
+                    <select id="rekap-filter-status" onchange="renderRekapTable()" class="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white">
                         <option value="ALL">Semua Status</option>
                         <option value="MENUNGGU_GURU">Menunggu Guru Piket</option>
                         <option value="MENUNGGU_SECURITY">Menunggu Security</option>
-                        <option value="SELESAI_KELUAR">Selesai (Sudah Keluar)</option>
+                        <option value="SELESAI_KELUAR">Selesai (Keluar Gerbang)</option>
                         <option value="DITOLAK">Ditolak</option>
                     </select>
-                    <select id="rekap-filter-jenis" onchange="renderRekapTable()" class="px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-white">
+                    <select id="rekap-filter-jenis" onchange="renderRekapTable()" class="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white">
                         <option value="ALL">Semua Jenis Izin</option>
                         <option value="Sakit">Izin Sakit</option>
                         <option value="Keperluan Keluarga">Keperluan Keluarga</option>
-                        <option value="Dispensasi">Dispensasi Tugas</option>
+                        <option value="Dispensasi">Dispensasi / Lomba</option>
                     </select>
                 </div>
 
                 <!-- Table -->
                 <div class="overflow-x-auto rounded-xl border border-slate-100">
-                    <table class="w-full text-left text-xs text-slate-600">
+                    <table class="w-full text-left text-xs text-slate-600 min-w-[650px]">
                         <thead class="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
                             <tr>
                                 <th class="p-3">Kode Tiket</th>
                                 <th class="p-3">Siswa & Kelas</th>
-                                <th class="p-3">Jenis Izin & Alasan</th>
-                                <th class="p-3">Verifikator 1 (Piket)</th>
-                                <th class="p-3">Verifikator 2 (Security)</th>
+                                <th class="p-3">Jenis & Alasan</th>
+                                <th class="p-3">Verifikator Piket</th>
+                                <th class="p-3">Verifikator Gerbang</th>
                                 <th class="p-3">Status</th>
                                 <th class="p-3 text-center">Aksi</th>
                             </tr>
@@ -386,13 +411,84 @@
         </div>
     </main>
 
+    <!-- MODAL: SCANNER KAMERA HP LIVE (DIPERKUAT UNTUK POS SECURITY) -->
+    <div id="modal-camera-scanner" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-50 hidden p-3 sm:p-4">
+        <div class="bg-slate-900 text-white rounded-3xl max-w-sm w-full p-4 sm:p-5 shadow-2xl border border-slate-800 relative overflow-hidden flex flex-col items-center">
+            
+            <!-- Header Modal -->
+            <div class="w-full flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+                <div class="flex items-center space-x-2 text-emerald-400">
+                    <i class="fa-solid fa-camera text-lg"></i>
+                    <h3 class="font-bold text-sm text-white">Pemindai QR Gerbang Sekolah</h3>
+                </div>
+                <button onclick="closeScannerModal()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Viewport Kamera HP -->
+            <div class="w-full relative rounded-2xl overflow-hidden bg-black aspect-square flex items-center justify-center border-2 border-slate-700 shadow-inner">
+                <!-- Video target element for Html5Qrcode -->
+                <div id="qr-camera-reader" class="w-full h-full"></div>
+
+                <!-- Scanning Reticle Overlay -->
+                <div class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6">
+                    <div class="w-48 h-48 sm:w-52 sm:h-52 border-2 border-emerald-400/80 rounded-2xl relative">
+                        <!-- Corner Accents -->
+                        <div class="absolute top-0 left-0 w-5 h-5 border-t-4 border-l-4 border-emerald-300 -mt-1 -ml-1 rounded-tl-sm"></div>
+                        <div class="absolute top-0 right-0 w-5 h-5 border-t-4 border-r-4 border-emerald-300 -mt-1 -mr-1 rounded-tr-sm"></div>
+                        <div class="absolute bottom-0 left-0 w-5 h-5 border-b-4 border-l-4 border-emerald-300 -mb-1 -ml-1 rounded-bl-sm"></div>
+                        <div class="absolute bottom-0 right-0 w-5 h-5 border-b-4 border-r-4 border-emerald-300 -mb-1 -mr-1 rounded-br-sm"></div>
+
+                        <!-- Animated Laser Scanning Line -->
+                        <div class="absolute left-2 right-2 h-0.5 bg-emerald-400 laser-line"></div>
+                    </div>
+                    <span class="text-[10px] sm:text-xs text-emerald-300 mt-3 font-semibold bg-slate-900/80 px-3 py-1 rounded-full border border-emerald-500/30 shadow">
+                        Arahkan kamera ke QR Siswa
+                    </span>
+                </div>
+            </div>
+
+            <!-- Status & Feedback -->
+            <div id="scanner-feedback" class="mt-3 text-center text-xs text-slate-300 px-2 min-h-[2.2rem] flex items-center justify-center">
+                <span>Mengaktifkan kamera belakang HP...</span>
+            </div>
+
+            <!-- Scanner Controls & Alternatives -->
+            <div class="mt-3 w-full space-y-2">
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="toggleCameraFacing()" id="btn-switch-camera" class="py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-700 transition">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        <span>Balik Kamera</span>
+                    </button>
+                    <!-- File upload QR alternative for permissions issue -->
+                    <label class="py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-700 cursor-pointer transition">
+                        <i class="fa-solid fa-image"></i>
+                        <span>Pilih Gambar</span>
+                        <input type="file" id="qr-file-input" accept="image/*" class="hidden" onchange="handleQrImageUpload(event)">
+                    </label>
+                </div>
+
+                <!-- Simulation button for testing on laptops/desktops -->
+                <button onclick="simulateScanSampleTicket()" class="w-full py-2 bg-emerald-950/60 hover:bg-emerald-900/70 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Uji Coba: Scan Tiket Siswa Siap Keluar</span>
+                </button>
+
+                <button onclick="closeScannerModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition">
+                    Tutup Pemindai
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: APPROVAL GURU PIKET -->
     <div id="modal-piket-approve" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-100">
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div class="flex items-center space-x-2 text-blue-600">
                     <i class="fa-solid fa-clipboard-check text-lg"></i>
-                    <h3 class="font-bold text-slate-800">Verifikasi Guru Piket (Tahap 1)</h3>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">Verifikasi Guru Piket (Tahap 1)</h3>
                 </div>
                 <button onclick="closeModal('modal-piket-approve')" class="text-slate-400 hover:text-slate-600">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -409,20 +505,20 @@
                 <div class="space-y-2 pt-1">
                     <label class="flex items-center space-x-2 text-xs text-slate-700 cursor-pointer">
                         <input type="checkbox" id="check-parent-confirmed" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4">
-                        <span>Saya sudah konfirmasi orang tua via Telepon / WA</span>
+                        <span>Saya telah konfirmasi dengan orang tua/wali</span>
                     </label>
                     <label class="block text-xs font-semibold text-slate-600">Catatan Guru Piket (Opsional)</label>
-                    <input type="text" id="piket-note-input" placeholder="Contoh: Diizinkan pulang, dijemput kakak kandung" 
+                    <input type="text" id="piket-note-input" placeholder="Contoh: Diizinkan pulang, dijemput orang tua" 
                         class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500">
                 </div>
             </div>
-            <div class="mt-6 flex space-x-2">
+            <div class="mt-5 flex space-x-2">
                 <button onclick="confirmPiketAction('REJECT')" class="w-1/3 py-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold transition">
-                    Tolak Izin
+                    Tolak
                 </button>
                 <button onclick="confirmPiketAction('APPROVE')" class="w-2/3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md transition flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-check"></i>
-                    <span>Setujui (Kirim ke Security)</span>
+                    <span>Setujui & Teruskan ke Satpam</span>
                 </button>
             </div>
         </div>
@@ -430,11 +526,11 @@
 
     <!-- MODAL: SECURITY GATE OUT CONFIRMATION -->
     <div id="modal-security-gate" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-100">
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div class="flex items-center space-x-2 text-emerald-600">
                     <i class="fa-solid fa-torii-gate text-lg"></i>
-                    <h3 class="font-bold text-slate-800">Validasi Gerbang Depan (Tahap 2)</h3>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">Persetujuan Keluar Gerbang (Tahap 2)</h3>
                 </div>
                 <button onclick="closeModal('modal-security-gate')" class="text-slate-400 hover:text-slate-600">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -443,29 +539,32 @@
             <div class="mt-4 space-y-3">
                 <input type="hidden" id="security-target-id">
                 <div class="bg-emerald-50 border border-emerald-100 p-3.5 rounded-xl text-xs space-y-1.5 text-slate-700">
-                    <p><span class="text-slate-500 font-medium">Tiket:</span> <span id="sec-modal-ticket" class="font-bold text-emerald-800 font-mono"></span></p>
-                    <p><span class="text-slate-500 font-medium">Siswa:</span> <span id="sec-modal-student" class="font-bold text-slate-900"></span></p>
-                    <p><span class="text-slate-500 font-medium">Catatan Piket:</span> <span id="sec-modal-piket-note" class="italic text-slate-600"></span></p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500 font-medium">Tiket Terverifikasi:</span>
+                        <span id="sec-modal-ticket" class="font-bold text-emerald-800 font-mono bg-emerald-100/70 px-2 py-0.5 rounded"></span>
+                    </div>
+                    <p><span class="text-slate-500 font-medium">Nama Siswa:</span> <span id="sec-modal-student" class="font-bold text-slate-900"></span></p>
+                    <p><span class="text-slate-500 font-medium">Catatan Guru Piket:</span> <span id="sec-modal-piket-note" class="italic text-slate-700"></span></p>
                 </div>
 
                 <div class="space-y-2 pt-1">
-                    <label class="block text-xs font-semibold text-slate-600">Informasi Penjemput / Kendaraan</label>
-                    <input type="text" id="sec-pickup-info" placeholder="Contoh: Dijemput Ibu (Motor Vario B 4321 SAA)" 
+                    <label class="block text-xs font-semibold text-slate-600">Data Penjemput / Plat Kendaraan</label>
+                    <input type="text" id="sec-pickup-info" placeholder="Contoh: Dijemput Ibu - Motor Vario B 3456 TAA" 
                         class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500">
                     
                     <label class="flex items-center space-x-2 text-xs text-slate-700 cursor-pointer pt-1">
                         <input type="checkbox" id="check-gate-open" checked class="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4">
-                        <span>Siswa sudah melewati gerbang & palang dibuka</span>
+                        <span>Palang pintu dibuka & siswa resmi keluar sekolah</span>
                     </label>
                 </div>
             </div>
-            <div class="mt-6 flex space-x-2">
+            <div class="mt-5 flex space-x-2">
                 <button onclick="closeModal('modal-security-gate')" class="w-1/3 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition">
                     Batal
                 </button>
                 <button onclick="confirmSecurityAction()" class="w-2/3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md transition flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-person-walking-arrow-right"></i>
-                    <span>Konfirmasi Keluar Sekolah</span>
+                    <span>Buka Palang & Checkout</span>
                 </button>
             </div>
         </div>
@@ -473,13 +572,11 @@
 
     <!-- MODAL: DIGITAL E-PASS / PRINTABLE PASS -->
     <div id="modal-view-pass" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 relative overflow-hidden">
-            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-50 rounded-full pointer-events-none"></div>
-            
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-100 relative overflow-hidden">
             <div class="flex items-center justify-between border-b border-dashed border-slate-200 pb-3">
                 <div class="flex items-center space-x-2">
                     <i class="fa-solid fa-id-card text-blue-600"></i>
-                    <span class="text-xs font-bold tracking-wider text-slate-700">SURAT IZIN KELUAR ELEKTRONIK</span>
+                    <span class="text-xs font-bold tracking-wider text-slate-700">SURAT IZIN KELUAR DIGITAL</span>
                 </div>
                 <button onclick="closeModal('modal-view-pass')" class="text-slate-400 hover:text-slate-600">
                     <i class="fa-solid fa-xmark"></i>
@@ -490,7 +587,7 @@
                 <!-- Pass dynamic content -->
             </div>
 
-            <div class="mt-6 pt-3 border-t border-dashed border-slate-200 flex justify-between gap-2">
+            <div class="mt-5 pt-3 border-t border-dashed border-slate-200">
                 <button onclick="closeModal('modal-view-pass')" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">
                     Tutup
                 </button>
@@ -499,17 +596,20 @@
     </div>
 
     <!-- Custom Toast Message Notification -->
-    <div id="toast-box" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
-        <div id="toast-inner" class="bg-slate-900 text-white text-xs px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-3 border border-slate-700">
+    <div id="toast-box" class="fixed bottom-5 right-5 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="toast-inner" class="bg-slate-900 text-white text-xs px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-3 border border-slate-700 max-w-xs">
             <span id="toast-icon" class="text-emerald-400 text-base"><i class="fa-solid fa-circle-check"></i></span>
             <span id="toast-text" class="font-medium">Pemberitahuan berhasil</span>
         </div>
     </div>
 
     <script>
-        // In-Memory Storage for Demo with comprehensive mock records
+        /* Initial Application Data */
         let currentRole = 'siswa';
         let activeStudentId = 'IZN-2026-001';
+        let html5QrScannerInstance = null;
+        let isScannerRunning = false;
+        let currentCameraFacing = 'environment'; // 'environment' (belakang) or 'user' (depan)
 
         let requestsData = [
             {
@@ -521,10 +621,10 @@
                 type: 'Izin Pulang (Sakit)',
                 reason: 'Sakit migrain dan pusing berat, suhu tubuh 38°C sejak jam istirahat pertama.',
                 timeRequested: '09:15 WIB',
-                status: 'MENUNGGU_SECURITY', // Sudah di acc guru piket, menuju security
+                status: 'MENUNGGU_SECURITY', // Sudah di acc guru piket, siap di gerbang
                 parentConfirmed: true,
                 piketApprover: 'Drs. H. Hendra, M.Pd',
-                piketNote: 'Siswa sudah diistirahatkan di UKS, orang tua siap menjemput di gerbang.',
+                piketNote: 'Siswa sudah istirahat di UKS, orang tua siap jemput di gerbang depan.',
                 piketTime: '09:25 WIB',
                 securityApprover: null,
                 securityNote: null,
@@ -540,7 +640,7 @@
                 type: 'Izin Keluar Sementara (Tugas/Dispensasi)',
                 reason: 'Dispensasi mewakili sekolah dalam babak final Olimpiade Sains di Universitas Negeri.',
                 timeRequested: '09:40 WIB',
-                status: 'MENUNGGU_GURU', // Masih di meja piket
+                status: 'MENUNGGU_GURU', // Masih menunggu persetujuan guru piket
                 parentConfirmed: false,
                 piketApprover: null,
                 piketNote: null,
@@ -559,7 +659,7 @@
                 type: 'Izin Pulang (Keperluan Keluarga)',
                 reason: 'Ada acara keluarga mendesak (kakek meninggal dunia di luar kota).',
                 timeRequested: '08:10 WIB',
-                status: 'SELESAI_KELUAR', // Sudah keluar gerbang
+                status: 'SELESAI_KELUAR', // Sudah checkout gerbang
                 parentConfirmed: true,
                 piketApprover: 'Drs. H. Hendra, M.Pd',
                 piketNote: 'Sudah diverifikasi surat pernyataan wali.',
@@ -571,6 +671,39 @@
             }
         ];
 
+        /* Sound Effect Synthesizer (Zero External URL Dependency) */
+        function playBeep(success = true) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (success) {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+                    osc.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.15); // E6 note
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc.start(audioCtx.currentTime);
+                    osc.stop(audioCtx.currentTime + 0.2);
+                } else {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(150, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start(audioCtx.currentTime);
+                    osc.stop(audioCtx.currentTime + 0.25);
+                }
+            } catch (e) {
+                // Audio context may be restricted before interaction
+            }
+        }
+
+        /* Realtime Clock */
         function updateLiveClock() {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('id-ID', { hour12: false }) + ' WIB';
@@ -580,7 +713,7 @@
         setInterval(updateLiveClock, 1000);
         updateLiveClock();
 
-        // Toast Helper (replacing forbidden alert)
+        /* Toast Helper */
         function showToast(message, isSuccess = true) {
             const toastBox = document.getElementById('toast-box');
             const toastText = document.getElementById('toast-text');
@@ -591,9 +724,9 @@
                 ? '<i class="fa-solid fa-circle-check text-emerald-400"></i>' 
                 : '<i class="fa-solid fa-circle-exclamation text-amber-400"></i>';
 
-            toastBox.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            toastBox.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
             setTimeout(() => {
-                toastBox.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+                toastBox.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
             }, 3200);
         }
 
@@ -605,10 +738,10 @@
                 const btn = document.getElementById(`role-btn-${v}`);
                 if (v === role) {
                     el.classList.remove('hidden');
-                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-white bg-blue-600 shadow-sm flex items-center gap-1.5";
+                    btn.className = "px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-white bg-blue-600 shadow-sm flex items-center gap-1";
                 } else {
                     el.classList.add('hidden');
-                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1.5";
+                    btn.className = "px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1";
                 }
             });
 
@@ -624,12 +757,12 @@
                 renderSiswaActivePass();
             } else if (role === 'piket') {
                 bannerTitle.innerText = "Portal Guru Piket: Verifikasi & Konfirmasi (Approval 1)";
-                bannerDesc.innerText = "Teliti alasan siswa, validasi konfirmasi orang tua via telepon, dan berikan persetujuan tahap pertama.";
+                bannerDesc.innerText = "Teliti alasan siswa, validasi orang tua via WhatsApp, lalu beri persetujuan tahap pertama.";
                 bannerIcon.innerHTML = '<i class="fa-solid fa-clipboard-check"></i>';
                 renderPiketQueue();
             } else if (role === 'security') {
                 bannerTitle.innerText = "Portal Satpam Gerbang Depan: Validasi Fisik Keluar (Approval 2)";
-                bannerDesc.innerText = "Cek QR/ID Tiket yang sudah disetujui Guru Piket sebelum membuka palang pintu keluar.";
+                bannerDesc.innerText = "Pindai tiket QR siswa menggunakan kamera HP pos untuk mencatat keluar & membuka palang.";
                 bannerIcon.innerHTML = '<i class="fa-solid fa-shield-halved"></i>';
                 renderSecurityQueue();
             } else if (role === 'rekap') {
@@ -651,7 +784,6 @@
             if (badgePiket) badgePiket.innerText = piketPending;
             if (badgeSecurity) badgeSecurity.innerText = securityPending;
 
-            // Stats on piket view
             const statPending = document.getElementById('stat-piket-pending');
             const statApproved = document.getElementById('stat-piket-approved');
             const statRejected = document.getElementById('stat-piket-rejected');
@@ -674,26 +806,25 @@
 
             document.getElementById('current-pass-id').innerText = currentItem.id;
 
-            // Compute status badge
             let statusBadge = '';
             let step1Class = 'step-active';
             let step2Class = 'border-slate-300 text-slate-400';
             let step3Class = 'border-slate-300 text-slate-400';
 
             if (currentItem.status === 'MENUNGGU_GURU') {
-                statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">Menunggu Guru Piket</span>`;
-                step1Class = 'step-active pulse-subtle';
+                statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">Menunggu Guru Piket</span>`;
+                step1Class = 'step-active';
             } else if (currentItem.status === 'MENUNGGU_SECURITY') {
-                statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800">Disetujui Piket • Ke Gerbang</span>`;
+                statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800">Disetujui Piket • Ke Gerbang</span>`;
                 step1Class = 'step-done';
-                step2Class = 'step-active pulse-subtle';
+                step2Class = 'step-active';
             } else if (currentItem.status === 'SELESAI_KELUAR') {
-                statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">Selesai • Sudah Keluar</span>`;
+                statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">Selesai • Sudah Keluar</span>`;
                 step1Class = 'step-done';
                 step2Class = 'step-done';
                 step3Class = 'step-done';
             } else if (currentItem.status === 'DITOLAK') {
-                statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800">Izin Ditolak</span>`;
+                statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">Izin Ditolak</span>`;
                 step1Class = 'bg-rose-500 border-rose-500 text-white';
             }
 
@@ -701,18 +832,17 @@
                 <div class="space-y-4">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h4 class="font-bold text-slate-900 text-base">${currentItem.name}</h4>
+                            <h4 class="font-bold text-slate-900 text-sm sm:text-base">${currentItem.name}</h4>
                             <p class="text-xs text-slate-500">${currentItem.kelas} • NISN: ${currentItem.nisn}</p>
                         </div>
                         ${statusBadge}
                     </div>
 
-                    <!-- Progress Step Tracker -->
+                    <!-- Step Tracker -->
                     <div class="py-2">
                         <div class="flex items-center justify-between relative">
                             <div class="absolute left-4 right-4 top-1/2 -translate-y-1/2 h-0.5 bg-slate-200 z-0"></div>
                             
-                            <!-- Step 1 -->
                             <div class="relative z-10 flex flex-col items-center">
                                 <div class="w-8 h-8 rounded-full border-2 bg-white flex items-center justify-center text-xs font-bold ${step1Class}">
                                     ${currentItem.status !== 'MENUNGGU_GURU' && currentItem.status !== 'DITOLAK' ? '<i class="fa-solid fa-check"></i>' : '1'}
@@ -720,15 +850,13 @@
                                 <span class="text-[10px] font-semibold mt-1 text-slate-600">Guru Piket</span>
                             </div>
 
-                            <!-- Step 2 -->
                             <div class="relative z-10 flex flex-col items-center">
                                 <div class="w-8 h-8 rounded-full border-2 bg-white flex items-center justify-center text-xs font-bold ${step2Class}">
                                     ${currentItem.status === 'SELESAI_KELUAR' ? '<i class="fa-solid fa-check"></i>' : '2'}
                                 </div>
-                                <span class="text-[10px] font-semibold mt-1 text-slate-600">Security Gate</span>
+                                <span class="text-[10px] font-semibold mt-1 text-slate-600">Pos Security</span>
                             </div>
 
-                            <!-- Step 3 -->
                             <div class="relative z-10 flex flex-col items-center">
                                 <div class="w-8 h-8 rounded-full border-2 bg-white flex items-center justify-center text-xs font-bold ${step3Class}">
                                     <i class="fa-solid fa-door-open"></i>
@@ -738,22 +866,22 @@
                         </div>
                     </div>
 
-                    <!-- Ticket Details -->
-                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs space-y-2">
+                    <!-- Detail Box -->
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-1.5">
                         <div class="flex justify-between">
-                            <span class="text-slate-400">Jenis Izin:</span>
+                            <span class="text-slate-400">Keperluan:</span>
                             <span class="font-semibold text-slate-700">${currentItem.type}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-slate-400">Jam Pengajuan:</span>
+                            <span class="text-slate-400">Jam Diajukan:</span>
                             <span class="font-semibold text-slate-700">${currentItem.timeRequested}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-slate-400">Alasan:</span>
-                            <span class="font-medium text-slate-700 text-right max-w-[200px] truncate">${currentItem.reason}</span>
+                            <span class="font-medium text-slate-700 text-right max-w-[210px] truncate">${currentItem.reason}</span>
                         </div>
                         ${currentItem.piketApprover ? `
-                        <div class="pt-2 border-t border-slate-200/60 flex justify-between">
+                        <div class="pt-1.5 border-t border-slate-200/60 flex justify-between">
                             <span class="text-slate-400">Persetujuan Piket:</span>
                             <span class="font-semibold text-emerald-700">${currentItem.piketApprover} (${currentItem.piketTime})</span>
                         </div>
@@ -766,8 +894,8 @@
                         ` : ''}
                     </div>
 
-                    <!-- Action: Lihat Pass Digital -->
-                    <button onclick="openDigitalPassModal('${currentItem.id}')" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition">
+                    <!-- Action: Buka Pass Digital -->
+                    <button onclick="openDigitalPassModal('${currentItem.id}')" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition active:scale-98">
                         <i class="fa-solid fa-qrcode"></i>
                         <span>Buka QR Pass / Kartu Izin Digital</span>
                     </button>
@@ -812,9 +940,7 @@
             requestsData.unshift(newRecord);
             activeStudentId = newId;
 
-            // Reset form
             document.getElementById('form-izin').reset();
-
             showToast(`Permohonan ${newId} berhasil dikirim ke Guru Piket!`);
             renderSiswaActivePass();
             updateBadges();
@@ -826,23 +952,23 @@
 
             if (pendingList.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center py-12">
+                    <div class="text-center py-10">
                         <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto text-xl mb-2">
                             <i class="fa-solid fa-check"></i>
                         </div>
                         <h4 class="font-bold text-slate-700 text-sm">Tidak ada antrean pending</h4>
-                        <p class="text-xs text-slate-400">Semua permohonan izin telah diverifikasi.</p>
+                        <p class="text-xs text-slate-400">Semua permohonan telah diverifikasi oleh Guru Piket.</p>
                     </div>
                 `;
                 return;
             }
 
             container.innerHTML = pendingList.map(item => `
-                <div class="p-5 hover:bg-slate-50/70 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div class="space-y-1.5 flex-1">
+                <div class="p-4 sm:p-5 hover:bg-slate-50/70 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
+                    <div class="space-y-1 flex-1">
                         <div class="flex items-center gap-2">
                             <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700">${item.id}</span>
-                            <span class="text-xs font-bold text-slate-900">${item.name}</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-900">${item.name}</span>
                             <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">${item.kelas}</span>
                             <span class="text-[11px] text-slate-400">• ${item.timeRequested}</span>
                         </div>
@@ -850,7 +976,7 @@
                         <p class="text-xs text-slate-600 bg-white p-2 rounded-lg border border-slate-100 inline-block max-w-xl">
                             <i class="fa-solid fa-quote-left text-slate-300 text-[10px] mr-1"></i>${item.reason}
                         </p>
-                        <div class="flex items-center gap-3 pt-1 text-xs">
+                        <div class="flex items-center gap-3 pt-0.5 text-xs">
                             <a href="https://wa.me/${item.phone.replace(/[^0-9]/g, '')}" target="_blank" class="text-emerald-600 hover:underline flex items-center gap-1 font-medium">
                                 <i class="fa-brands fa-whatsapp"></i> Hubungi Ortu (${item.phone})
                             </a>
@@ -899,7 +1025,7 @@
                 requestsData[idx].piketNote = note || (parentConfirmed ? 'Disetujui. Sudah konfirmasi orang tua.' : 'Disetujui.');
                 requestsData[idx].piketTime = timeStr;
                 requestsData[idx].parentConfirmed = parentConfirmed;
-                showToast(`Izin ${id} disetujui Guru Piket. Diteruskan ke Security Gerbang!`);
+                showToast(`Izin ${id} disetujui Guru Piket. Siswa diteruskan ke Pos Security!`);
             } else {
                 requestsData[idx].status = 'DITOLAK';
                 requestsData[idx].piketApprover = officer;
@@ -929,40 +1055,40 @@
 
             if (list.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center py-12">
+                    <div class="text-center py-10">
                         <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-xl mb-2">
                             <i class="fa-solid fa-user-shield"></i>
                         </div>
                         <h4 class="font-bold text-slate-700 text-sm">Tidak ada siswa menunggu di gerbang</h4>
-                        <p class="text-xs text-slate-400">Siswa yang disetujui Guru Piket akan muncul otomatis di sini.</p>
+                        <p class="text-xs text-slate-400">Siswa yang disetujui Guru Piket akan muncul otomatis di pos ini.</p>
                     </div>
                 `;
                 return;
             }
 
             container.innerHTML = list.map(item => `
-                <div class="p-5 hover:bg-slate-50 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div class="space-y-1.5 flex-1">
+                <div class="p-4 sm:p-5 hover:bg-slate-50 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
+                    <div class="space-y-1 flex-1">
                         <div class="flex items-center gap-2">
                             <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">${item.id}</span>
-                            <span class="text-sm font-bold text-slate-900">${item.name}</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-900">${item.name}</span>
                             <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">${item.kelas}</span>
                         </div>
                         <p class="text-xs text-slate-600"><span class="font-semibold text-slate-800">Alasan:</span> ${item.type} - ${item.reason}</p>
                         <div class="bg-blue-50/70 p-2 rounded-lg text-xs text-blue-900 flex items-center gap-2 border border-blue-100">
                             <i class="fa-solid fa-signature text-blue-500"></i>
-                            <span>Disetujui Guru Piket: <b>${item.piketApprover}</b> pada ${item.piketTime} (${item.piketNote})</span>
+                            <span>Acc Guru Piket: <b>${item.piketApprover}</b> (${item.piketTime}) - <i>"${item.piketNote}"</i></span>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-2 shrink-0">
                         <button onclick="openDigitalPassModal('${item.id}')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
                             <i class="fa-solid fa-qrcode"></i>
-                            <span>Scan / QR</span>
+                            <span>QR</span>
                         </button>
-                        <button onclick="openSecurityModal('${item.id}')" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md transition flex items-center gap-1.5">
+                        <button onclick="openSecurityModal('${item.id}')" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md transition flex items-center gap-1.5">
                             <i class="fa-solid fa-person-walking-dashed-line-arrow-right"></i>
-                            <span>Buka Gerbang & Checkout</span>
+                            <span>Verifikasi & Buka Gerbang</span>
                         </button>
                     </div>
                 </div>
@@ -973,6 +1099,159 @@
             renderSecurityQueue();
         }
 
+        /* Mobile Camera Scanner Implementation */
+        function openScannerModal() {
+            const modal = document.getElementById('modal-camera-scanner');
+            const feedback = document.getElementById('scanner-feedback');
+            modal.classList.remove('hidden');
+            feedback.innerHTML = `<span>Menghubungkan ke kamera smartphone...</span>`;
+
+            if (html5QrScannerInstance) {
+                html5QrScannerInstance.stop().catch(() => {}).then(() => {
+                    startCameraScanner();
+                });
+            } else {
+                startCameraScanner();
+            }
+        }
+
+        function startCameraScanner() {
+            const feedback = document.getElementById('scanner-feedback');
+            html5QrScannerInstance = new Html5Qrcode("qr-camera-reader");
+            
+            const config = {
+                fps: 15,
+                qrbox: { width: 220, height: 220 },
+                aspectRatio: 1.0
+            };
+
+            // Menggunakan kamera belakang (environment) secara default
+            html5QrScannerInstance.start(
+                { facingMode: currentCameraFacing },
+                config,
+                onQrCodeScannedSuccess,
+                onQrCodeScanError
+            ).then(() => {
+                isScannerRunning = true;
+                feedback.innerHTML = `<span class="text-emerald-400 font-medium"><i class="fa-solid fa-circle-dot text-[8px] animate-ping mr-1"></i> Kamera Aktif (${currentCameraFacing === 'environment' ? 'Kamera Belakang' : 'Kamera Depan'}). Arahkan ke QR.</span>`;
+            }).catch(err => {
+                isScannerRunning = false;
+                feedback.innerHTML = `
+                    <div class="text-rose-400 text-xs text-center space-y-1">
+                        <p><i class="fa-solid fa-triangle-exclamation"></i> Izin kamera dibatasi atau tidak tersedia.</p>
+                        <p class="text-slate-400 text-[11px]">Silakan izinkan kamera pada browser atau gunakan tombol <b>Pilih Gambar</b> / <b>Uji Coba</b> di bawah.</p>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleCameraFacing() {
+            currentCameraFacing = (currentCameraFacing === 'environment') ? 'user' : 'environment';
+            if (html5QrScannerInstance && isScannerRunning) {
+                html5QrScannerInstance.stop().then(() => {
+                    isScannerRunning = false;
+                    startCameraScanner();
+                }).catch(() => {
+                    startCameraScanner();
+                });
+            } else {
+                startCameraScanner();
+            }
+        }
+
+        function onQrCodeScanError(errorMessage) {
+            // Frame read error diabaikan untuk menjaga performa fps
+        }
+
+        function onQrCodeScannedSuccess(decodedText) {
+            // Format QR: PASSSMA1:IZN-2026-001:0062839120:MENUNGGU_SECURITY atau langsung ID
+            let scannedTicketId = decodedText;
+            if (decodedText.startsWith('PASSSMA1:')) {
+                const parts = decodedText.split(':');
+                scannedTicketId = parts[1] || decodedText;
+            }
+
+            // Mainkan suara BEEP sukses!
+            playBeep(true);
+
+            // Tutup kamera segera agar tidak trigger scan ganda
+            closeScannerModal();
+
+            // Verifikasi data
+            processScannedTicket(scannedTicketId);
+        }
+
+        function processScannedTicket(ticketId) {
+            const target = requestsData.find(r => r.id.toUpperCase() === ticketId.trim().toUpperCase());
+
+            if (!target) {
+                playBeep(false);
+                showToast(`Tiket ${ticketId} tidak terdaftar di sistem!`, false);
+                return;
+            }
+
+            if (target.status === 'MENUNGGU_GURU') {
+                playBeep(false);
+                showToast(`Peringatan: Tiket ${target.id} (${target.name}) BELUM disetujui Guru Piket!`, false);
+                return;
+            }
+
+            if (target.status === 'SELESAI_KELUAR') {
+                playBeep(false);
+                showToast(`Tiket Kedaluwarsa: ${target.name} sudah keluar gerbang pada ${target.securityTime}.`, false);
+                return;
+            }
+
+            if (target.status === 'DITOLAK') {
+                playBeep(false);
+                showToast(`Tiket Ditolak: Permohonan ${target.id} ditolak oleh guru piket.`, false);
+                return;
+            }
+
+            // Jika status valid (MENUNGGU_SECURITY): Buka dialog konfirmasi satpam
+            showToast(`QR Valid! Membuka verifikasi gerbang untuk ${target.name}...`);
+            openSecurityModal(target.id);
+        }
+
+        /* Image upload alternative scanner */
+        function handleQrImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const scanner = new Html5Qrcode("qr-camera-reader");
+            scanner.scanFile(file, true)
+                .then(decodedText => {
+                    onQrCodeScannedSuccess(decodedText);
+                })
+                .catch(err => {
+                    playBeep(false);
+                    showToast("Tidak dapat mendeteksi QR pada gambar tersebut!", false);
+                });
+        }
+
+        /* Direct Test Simulator for Iframe / Desktop */
+        function simulateScanSampleTicket() {
+            const readyItem = requestsData.find(r => r.status === 'MENUNGGU_SECURITY');
+            if (readyItem) {
+                onQrCodeScannedSuccess(readyItem.id);
+            } else {
+                showToast("Tidak ada siswa dengan status siap keluar saat ini.", false);
+            }
+        }
+
+        function closeScannerModal() {
+            const modal = document.getElementById('modal-camera-scanner');
+            if (modal) modal.classList.add('hidden');
+
+            if (html5QrScannerInstance && isScannerRunning) {
+                html5QrScannerInstance.stop().then(() => {
+                    isScannerRunning = false;
+                }).catch(() => {
+                    isScannerRunning = false;
+                });
+            }
+        }
+
         function openSecurityModal(id) {
             const item = requestsData.find(r => r.id === id);
             if (!item) return;
@@ -980,7 +1259,7 @@
             document.getElementById('security-target-id').value = id;
             document.getElementById('sec-modal-ticket').innerText = item.id;
             document.getElementById('sec-modal-student').innerText = `${item.name} (${item.kelas})`;
-            document.getElementById('sec-modal-piket-note').innerText = `"${item.piketNote || 'Disetujui'}"`;
+            document.getElementById('sec-modal-piket-note').innerText = `"${item.piketNote || 'Disetujui Guru Piket'}"`;
             document.getElementById('sec-pickup-info').value = '';
 
             document.getElementById('modal-security-gate').classList.remove('hidden');
@@ -988,7 +1267,7 @@
 
         function confirmSecurityAction() {
             const id = document.getElementById('security-target-id').value;
-            const officer = document.getElementById('officer-security-name').value || 'Satpam Gerbang';
+            const officer = document.getElementById('officer-security-name').value || 'Satpam Pos A';
             const pickupInfo = document.getElementById('sec-pickup-info').value.trim();
 
             const idx = requestsData.findIndex(r => r.id === id);
@@ -999,11 +1278,12 @@
 
             requestsData[idx].status = 'SELESAI_KELUAR';
             requestsData[idx].securityApprover = officer;
-            requestsData[idx].securityNote = pickupInfo || 'Siswa keluar gerbang utama.';
+            requestsData[idx].securityNote = pickupInfo || 'Keluar gerbang utama.';
             requestsData[idx].securityTime = timeStr;
 
             closeModal('modal-security-gate');
-            showToast(`Siswa ${requestsData[idx].name} telah diverifikasi keluar gerbang!`);
+            playBeep(true);
+            showToast(`Palang Gerbang Dibuka! Siswa ${requestsData[idx].name} telah keluar sekolah.`);
             renderSecurityQueue();
             updateBadges();
             if (id === activeStudentId) renderSiswaActivePass();
@@ -1042,7 +1322,7 @@
             tbody.innerHTML = filtered.map(item => {
                 let badge = '';
                 if (item.status === 'MENUNGGU_GURU') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Menunggu Piket</span>';
-                else if (item.status === 'MENUNGGU_SECURITY') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">Piket OK (Di Gerbang)</span>';
+                else if (item.status === 'MENUNGGU_SECURITY') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">Acc Piket (Di Gerbang)</span>';
                 else if (item.status === 'SELESAI_KELUAR') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Selesai (Keluar)</span>';
                 else if (item.status === 'DITOLAK') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">Ditolak</span>';
 
@@ -1061,7 +1341,7 @@
                             ${item.piketApprover ? `
                                 <span class="font-semibold text-slate-800">${item.piketApprover}</span>
                                 <p class="text-[10px] text-emerald-600">${item.piketTime}</p>
-                            ` : '<span class="text-slate-300 italic">Belum diverifikasi</span>'}
+                            ` : '<span class="text-slate-300 italic">Belum</span>'}
                         </td>
                         <td class="p-3">
                             ${item.securityApprover ? `
@@ -1090,10 +1370,10 @@
             container.innerHTML = `
                 <div class="border-2 border-dashed border-slate-200 p-4 rounded-2xl bg-slate-50 relative">
                     <h2 class="font-bold text-slate-800 text-sm">SMA NEGERI 1</h2>
-                    <p class="text-[10px] text-slate-400 tracking-wider">GATE PASS PERIZINAN SISWA</p>
+                    <p class="text-[10px] text-slate-400 tracking-wider uppercase font-semibold">Gate Pass Perizinan Siswa</p>
                     
                     <div class="my-3 flex justify-center">
-                        <div id="qrcode-box" class="p-2 bg-white rounded-xl shadow-sm border border-slate-100"></div>
+                        <div id="qrcode-box" class="p-2 bg-white rounded-2xl shadow-sm border border-slate-200"></div>
                     </div>
 
                     <div class="space-y-1 text-xs">
@@ -1112,21 +1392,20 @@
 
             modal.classList.remove('hidden');
 
-            // Generate QR Code dynamic
             setTimeout(() => {
                 const qrBox = document.getElementById('qrcode-box');
                 if (qrBox) {
                     qrBox.innerHTML = '';
                     new QRCode(qrBox, {
                         text: `PASSSMA1:${item.id}:${item.nisn}:${item.status}`,
-                        width: 120,
-                        height: 120,
-                        colorDark: "#1e293b",
+                        width: 140,
+                        height: 140,
+                        colorDark: "#0f172a",
                         colorLight: "#ffffff",
                         correctLevel: QRCode.CorrectLevel.H
                     });
                 }
-            }, 50);
+            }, 60);
         }
 
         function closeModal(modalId) {
@@ -1164,7 +1443,7 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showToast("File CSV berhasil diexport!");
+            showToast("File CSV berhasil diunduh!");
         }
 
         function printFilteredReport() {

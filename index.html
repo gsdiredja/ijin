@@ -84,29 +84,35 @@
                         <i class="fa-solid fa-graduation-cap"></i>
                     </div>
                     <div>
-                        <h1 class="text-sm sm:text-base font-bold tracking-tight">E-IZIN SMA NEGERI 1</h1>
-                        <p class="text-[10px] sm:text-xs text-blue-200">Sistem Perizinan Keluar 2-Pintu</p>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-sm sm:text-base font-bold tracking-tight">E-IZIN SMA NEGERI 1</h1>
+                            <button onclick="openConfigModal()" id="realtime-status-pill" class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 hover:bg-amber-500/30 transition cursor-pointer" title="Klik untuk atur Firebase Cloud">
+                                <span id="status-indicator-dot" class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                                <span id="status-indicator-text">Atur Cloud Realtime</span>
+                            </button>
+                        </div>
+                        <p class="text-[10px] sm:text-xs text-blue-200">Sistem Perizinan Terpadu Siswa • Guru BK • Piket • Security</p>
                     </div>
                 </div>
 
                 <!-- Fast Role Switcher -->
                 <div class="flex items-center space-x-1 sm:space-x-2">
                     <div class="inline-flex bg-primary-800 p-1 rounded-xl border border-blue-700/50">
-                        <button onclick="switchRole('siswa')" id="role-btn-siswa" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-white bg-blue-600 shadow-sm flex items-center gap-1.5">
+                        <button onclick="switchRole('siswa')" id="role-btn-siswa" class="px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-white bg-blue-600 shadow-sm flex items-center gap-1.5">
                             <i class="fa-solid fa-user-graduate"></i>
                             <span class="hidden md:inline">Siswa</span>
                         </button>
-                        <button onclick="switchRole('piket')" id="role-btn-piket" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1">
-                            <i class="fa-solid fa-clipboard-check"></i>
-                            <span class="hidden md:inline">Guru Piket</span>
+                        <button onclick="switchRole('piket')" id="role-btn-piket" class="px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1">
+                            <i class="fa-solid fa-user-tie"></i>
+                            <span class="hidden md:inline">Piket & BK</span>
                             <span id="badge-piket" class="ml-0.5 bg-amber-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
                         </button>
-                        <button onclick="switchRole('security')" id="role-btn-security" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1">
+                        <button onclick="switchRole('security')" id="role-btn-security" class="px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1">
                             <i class="fa-solid fa-shield-halved"></i>
                             <span class="hidden md:inline">Security</span>
                             <span id="badge-security" class="ml-0.5 bg-emerald-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
                         </button>
-                        <button onclick="switchRole('rekap')" id="role-btn-rekap" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1">
+                        <button onclick="switchRole('rekap')" id="role-btn-rekap" class="px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1">
                             <i class="fa-solid fa-clock-rotate-left"></i>
                             <span class="hidden md:inline">Rekap</span>
                         </button>
@@ -277,12 +283,15 @@
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
-                        <h3 class="font-bold text-slate-800 text-sm sm:text-base">Antrean Izin Masuk ke Guru Piket (Approval 1)</h3>
-                        <p class="text-xs text-slate-500">Periksa alasan siswa dan hubungi orang tua jika diperlukan izin pulang.</p>
+                        <h3 class="font-bold text-slate-800 text-sm sm:text-base">Antrean Izin Masuk Guru Piket / BK (Approval 1)</h3>
+                        <p class="text-xs text-slate-500">Otomatis terupdate *real-time* saat siswa mengirim formulir dari smartphone.</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs text-slate-400">Guru Piket:</span>
-                        <input type="text" id="officer-piket-name" value="Drs. H. Hendra, M.Pd" class="px-2.5 py-1 text-xs border rounded-lg font-semibold bg-slate-50 text-slate-700">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <select id="officer-role-select" class="px-2.5 py-1 text-xs border rounded-lg bg-slate-50 font-semibold text-slate-700">
+                            <option value="Guru Piket">Petugas: Guru Piket</option>
+                            <option value="Guru BK">Petugas: Guru BK</option>
+                        </select>
+                        <input type="text" id="officer-piket-name" value="Drs. H. Hendra, M.Pd" class="px-2.5 py-1 text-xs border rounded-lg font-semibold bg-slate-50 text-slate-700 w-44">
                     </div>
                 </div>
 
@@ -488,7 +497,7 @@
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div class="flex items-center space-x-2 text-blue-600">
                     <i class="fa-solid fa-clipboard-check text-lg"></i>
-                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">Verifikasi Guru Piket (Tahap 1)</h3>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">Verifikasi Guru Piket / BK (Tahap 1)</h3>
                 </div>
                 <button onclick="closeModal('modal-piket-approve')" class="text-slate-400 hover:text-slate-600">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -505,20 +514,20 @@
                 <div class="space-y-2 pt-1">
                     <label class="flex items-center space-x-2 text-xs text-slate-700 cursor-pointer">
                         <input type="checkbox" id="check-parent-confirmed" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4">
-                        <span>Saya telah konfirmasi dengan orang tua/wali</span>
+                        <span>Sudah konfirmasi & persetujuan orang tua/wali</span>
                     </label>
-                    <label class="block text-xs font-semibold text-slate-600">Catatan Guru Piket (Opsional)</label>
-                    <input type="text" id="piket-note-input" placeholder="Contoh: Diizinkan pulang, dijemput orang tua" 
+                    <label class="block text-xs font-semibold text-slate-600">Catatan Verifikasi Guru Piket / BK</label>
+                    <input type="text" id="piket-note-input" placeholder="Contoh: Disetujui, orang tua menjemput di pos depan" 
                         class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500">
                 </div>
             </div>
             <div class="mt-5 flex space-x-2">
                 <button onclick="confirmPiketAction('REJECT')" class="w-1/3 py-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold transition">
-                    Tolak
+                    Tolak Izin
                 </button>
                 <button onclick="confirmPiketAction('APPROVE')" class="w-2/3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md transition flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-check"></i>
-                    <span>Setujui & Teruskan ke Satpam</span>
+                    <span>Setujui & Teruskan ke Security</span>
                 </button>
             </div>
         </div>
@@ -583,14 +592,49 @@
                 </button>
             </div>
 
-            <div id="print-pass-content" class="mt-4 text-center space-y-3">
-                <!-- Pass dynamic content -->
+    <!-- MODAL: PENGATURAN KONEKSI CLOUD (UNTUK GITHUB PAGES / STANDALONE) -->
+    <div id="modal-cloud-config" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center space-x-2 text-blue-600">
+                    <i class="fa-solid fa-cloud-bolt text-lg"></i>
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">Koneksi Database Cloud (Multi-Device)</h3>
+                </div>
+                <button onclick="closeModal('modal-cloud-config')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
             </div>
 
-            <div class="mt-5 pt-3 border-t border-dashed border-slate-200">
-                <button onclick="closeModal('modal-view-pass')" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">
-                    Tutup
-                </button>
+            <div class="mt-4 space-y-3.5 text-xs text-slate-600">
+                <div class="bg-blue-50 border border-blue-200/70 rounded-xl p-3 text-blue-900">
+                    <p class="font-semibold text-xs mb-1">Kenapa butuh ini di GitHub Pages?</p>
+                    <p class="text-[11px] leading-relaxed">
+                        GitHub Pages hanya menyimpan file statis. Agar HP Guru Piket, HP Security, dan HP Siswa bisa <b>sinkron otomatis tanpa reload</b>, hubungkan ke Firebase Firestore gratis (Google).
+                    </p>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Paste Firebase Config JSON / Objek:</label>
+                    <textarea id="input-firebase-config" rows="6" placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "e-izin-sma.firebaseapp.com",
+  "projectId": "e-izin-sma",
+  "storageBucket": "e-izin-sma.appspot.com",
+  "messagingSenderId": "...",
+  "appId": "1:..."
+}' class="w-full font-mono text-[11px] p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    <p class="text-[10px] text-slate-400 mt-1">Dapatkan gratis di: <a href="https://console.firebase.google.com" target="_blank" class="text-blue-600 underline">console.firebase.google.com</a> &rarr; Project Settings &rarr; Your apps &rarr; SDK setup and configuration.</p>
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button onclick="saveCustomFirebaseConfig()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-md transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Simpan & Sambungkan Cloud</span>
+                    </button>
+                    <button onclick="resetToLocalMemory()" class="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-semibold transition" title="Gunakan mode offline lokal">
+                        Offline
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -603,15 +647,45 @@
         </div>
     </div>
 
-    <script>
-        /* Initial Application Data */
-        let currentRole = 'siswa';
-        let activeStudentId = 'IZN-2026-001';
-        let html5QrScannerInstance = null;
-        let isScannerRunning = false;
-        let currentCameraFacing = 'environment'; // 'environment' (belakang) or 'user' (depan)
+    <!-- Realtime Cloud Synchronization Engine (Firebase Firestore) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        let requestsData = [
+        // Global state and references
+        window.currentRole = 'siswa';
+        window.activeStudentId = 'IZN-2026-001';
+        window.html5QrScannerInstance = null;
+        window.isScannerRunning = false;
+        window.currentCameraFacing = 'environment';
+
+        let isCloudConnected = false;
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        let permitCollectionRef = null;
+        let broadcastChannel = null;
+
+        // BroadcastChannel to keep multiple tabs in sync instantly without page refresh
+        try {
+            if ('BroadcastChannel' in window) {
+                broadcastChannel = new BroadcastChannel('e_izin_channel');
+                broadcastChannel.onmessage = (event) => {
+                    if (event.data && event.data.type === 'DATA_UPDATED') {
+                        if (event.data.payload) {
+                            window.requestsData = event.data.payload;
+                            updateUIAfterDataSync();
+                        }
+                    }
+                };
+            }
+        } catch (e) {
+            console.log('BroadcastChannel not supported');
+        }
+
+        // Default initial data fallback
+        window.requestsData = [
             {
                 id: 'IZN-2026-001',
                 name: 'Muhammad Farhan',
@@ -621,15 +695,16 @@
                 type: 'Izin Pulang (Sakit)',
                 reason: 'Sakit migrain dan pusing berat, suhu tubuh 38°C sejak jam istirahat pertama.',
                 timeRequested: '09:15 WIB',
-                status: 'MENUNGGU_SECURITY', // Sudah di acc guru piket, siap di gerbang
+                status: 'MENUNGGU_SECURITY',
                 parentConfirmed: true,
-                piketApprover: 'Drs. H. Hendra, M.Pd',
+                piketApprover: 'Drs. H. Hendra, M.Pd (Guru Piket)',
                 piketNote: 'Siswa sudah istirahat di UKS, orang tua siap jemput di gerbang depan.',
                 piketTime: '09:25 WIB',
                 securityApprover: null,
                 securityNote: null,
                 securityTime: null,
-                exitPlate: null
+                exitPlate: null,
+                createdAt: Date.now() - 3600000
             },
             {
                 id: 'IZN-2026-002',
@@ -640,7 +715,7 @@
                 type: 'Izin Keluar Sementara (Tugas/Dispensasi)',
                 reason: 'Dispensasi mewakili sekolah dalam babak final Olimpiade Sains di Universitas Negeri.',
                 timeRequested: '09:40 WIB',
-                status: 'MENUNGGU_GURU', // Masih menunggu persetujuan guru piket
+                status: 'MENUNGGU_GURU',
                 parentConfirmed: false,
                 piketApprover: null,
                 piketNote: null,
@@ -648,31 +723,130 @@
                 securityApprover: null,
                 securityNote: null,
                 securityTime: null,
-                exitPlate: null
-            },
-            {
-                id: 'IZN-2026-003',
-                name: 'Bagas Aditya Pratama',
-                nisn: '0069912837',
-                kelas: 'XII IPS 1',
-                phone: '081399887766',
-                type: 'Izin Pulang (Keperluan Keluarga)',
-                reason: 'Ada acara keluarga mendesak (kakek meninggal dunia di luar kota).',
-                timeRequested: '08:10 WIB',
-                status: 'SELESAI_KELUAR', // Sudah checkout gerbang
-                parentConfirmed: true,
-                piketApprover: 'Drs. H. Hendra, M.Pd',
-                piketNote: 'Sudah diverifikasi surat pernyataan wali.',
-                piketTime: '08:20 WIB',
-                securityApprover: 'Sutrisno (Pos A)',
-                securityNote: 'Dijemput mobil keluarga Innova Hitam B 1902 KAA',
-                securityTime: '08:30 WIB',
-                exitPlate: 'B 1902 KAA'
+                exitPlate: null,
+                createdAt: Date.now() - 1800000
             }
         ];
 
-        /* Sound Effect Synthesizer (Zero External URL Dependency) */
-        function playBeep(success = true) {
+        /* Realtime Cloud Setup */
+        async function initCloudSync() {
+            try {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'e-izin-sma-negeri1';
+                
+                // Check if user has custom Firebase config in localStorage (for GitHub Pages hosting)
+                let customConfigStr = null;
+                try {
+                    customConfigStr = localStorage.getItem('e_izin_custom_firebase');
+                } catch(e) {}
+
+                let rawConfig = null;
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                    rawConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+                } else if (customConfigStr) {
+                    rawConfig = JSON.parse(customConfigStr);
+                }
+
+                if (rawConfig) {
+                    const app = initializeApp(rawConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    // Authenticate prior to Firestore operations (Rule 3)
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    currentUser = auth.currentUser;
+
+                    // Public data collection path (Rule 1: /artifacts/{appId}/public/data/{collectionName})
+                    permitCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'permits');
+
+                    // Real-time synchronization listener
+                    let initialLoad = true;
+                    onSnapshot(permitCollectionRef, (snapshot) => {
+                        if (!snapshot.empty) {
+                            const cloudItems = [];
+                            snapshot.forEach(docSnap => {
+                                cloudItems.push({ id: docSnap.id, ...docSnap.data() });
+                            });
+
+                            // Sort by creation time descending in JavaScript memory (Rule 2)
+                            cloudItems.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+                            // Sound notification on new pending item
+                            if (!initialLoad && cloudItems.length > window.requestsData.length) {
+                                window.playBeep(true);
+                                window.showToast("Pemberitahuan: Terdapat pengajuan izin siswa baru!");
+                            }
+
+                            window.requestsData = cloudItems;
+                            if (window.requestsData.length > 0 && !window.requestsData.find(r => r.id === window.activeStudentId)) {
+                                window.activeStudentId = window.requestsData[0].id;
+                            }
+                        } else {
+                            // Seed default demo records to Firestore if collection is empty
+                            window.requestsData.forEach(async (item) => {
+                                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'permits', item.id);
+                                await setDoc(docRef, item);
+                            });
+                        }
+
+                        initialLoad = false;
+                        isCloudConnected = true;
+                        setConnectionStatus(true);
+                        updateUIAfterDataSync();
+                    }, (error) => {
+                        console.warn("Cloud sync listener error:", error);
+                        setConnectionStatus(false);
+                    });
+                } else {
+                    // Running in standalone/preview offline mode
+                    setConnectionStatus(false);
+                    updateUIAfterDataSync();
+                }
+            } catch (err) {
+                console.warn("Real-time cloud initialization error:", err);
+                setConnectionStatus(false);
+                updateUIAfterDataSync();
+            }
+        }
+
+        function setConnectionStatus(isConnected) {
+            const pill = document.getElementById('realtime-status-pill');
+            const dot = document.getElementById('status-indicator-dot');
+            const text = document.getElementById('status-indicator-text');
+            if (!pill || !dot || !text) return;
+
+            if (isConnected) {
+                pill.className = "inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 hover:bg-emerald-500/30 transition cursor-pointer";
+                dot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse";
+                text.innerText = "Cloud Realtime Aktif";
+            } else {
+                pill.className = "inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 hover:bg-amber-500/30 transition cursor-pointer";
+                dot.className = "w-1.5 h-1.5 rounded-full bg-amber-400";
+                text.innerText = "Atur Cloud Realtime";
+            }
+        }
+
+        // Global UI sync helper to update all portals without page reload
+        function updateUIAfterDataSync() {
+            window.updateBadges();
+            window.renderSiswaActivePass();
+            window.renderPiketQueue();
+            window.renderSecurityQueue();
+            window.renderRekapTable();
+
+            // Broadcast to other open browser tabs
+            if (broadcastChannel) {
+                try {
+                    broadcastChannel.postMessage({ type: 'DATA_UPDATED', payload: window.requestsData });
+                } catch(e) {}
+            }
+        }
+
+        /* Sound Effect Synthesizer (No external audio file dependency) */
+        window.playBeep = function(success = true) {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = audioCtx.createOscillator();
@@ -683,8 +857,8 @@
 
                 if (success) {
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
-                    osc.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.15); // E6 note
+                    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.15);
                     gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
                     osc.start(audioCtx.currentTime);
@@ -699,9 +873,9 @@
                     osc.stop(audioCtx.currentTime + 0.25);
                 }
             } catch (e) {
-                // Audio context may be restricted before interaction
+                // Audio context may be restricted before user touch/click
             }
-        }
+        };
 
         /* Realtime Clock */
         function updateLiveClock() {
@@ -714,11 +888,12 @@
         updateLiveClock();
 
         /* Toast Helper */
-        function showToast(message, isSuccess = true) {
+        window.showToast = function(message, isSuccess = true) {
             const toastBox = document.getElementById('toast-box');
             const toastText = document.getElementById('toast-text');
             const toastIcon = document.getElementById('toast-icon');
 
+            if (!toastBox || !toastText) return;
             toastText.innerText = message;
             toastIcon.innerHTML = isSuccess 
                 ? '<i class="fa-solid fa-circle-check text-emerald-400"></i>' 
@@ -728,56 +903,56 @@
             setTimeout(() => {
                 toastBox.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
             }, 3200);
-        }
+        };
 
-        function switchRole(role) {
-            currentRole = role;
+        /* Role Switcher */
+        window.switchRole = function(role) {
+            window.currentRole = role;
             const views = ['siswa', 'piket', 'security', 'rekap'];
             views.forEach(v => {
                 const el = document.getElementById(`view-${v}`);
                 const btn = document.getElementById(`role-btn-${v}`);
                 if (v === role) {
                     el.classList.remove('hidden');
-                    btn.className = "px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-white bg-blue-600 shadow-sm flex items-center gap-1";
+                    btn.className = "px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-white bg-blue-600 shadow-sm flex items-center gap-1.5";
                 } else {
                     el.classList.add('hidden');
-                    btn.className = "px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1";
+                    btn.className = "px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-blue-200 hover:text-white flex items-center gap-1";
                 }
             });
 
-            // Update Banner
             const bannerTitle = document.getElementById('banner-title');
             const bannerDesc = document.getElementById('banner-desc');
             const bannerIcon = document.getElementById('banner-icon');
 
             if (role === 'siswa') {
                 bannerTitle.innerText = "Portal Siswa: Pengajuan & Cek Tiket Izin";
-                bannerDesc.innerText = "Ajukan izin meninggalkan sekolah atau periksa status persetujuan surat jalan Anda.";
+                bannerDesc.innerText = "Ajukan izin meninggalkan sekolah atau periksa status tiket keluar Anda secara live.";
                 bannerIcon.innerHTML = '<i class="fa-solid fa-user-graduate"></i>';
-                renderSiswaActivePass();
+                window.renderSiswaActivePass();
             } else if (role === 'piket') {
-                bannerTitle.innerText = "Portal Guru Piket: Verifikasi & Konfirmasi (Approval 1)";
-                bannerDesc.innerText = "Teliti alasan siswa, validasi orang tua via WhatsApp, lalu beri persetujuan tahap pertama.";
-                bannerIcon.innerHTML = '<i class="fa-solid fa-clipboard-check"></i>';
-                renderPiketQueue();
+                bannerTitle.innerText = "Portal Guru Piket & BK: Verifikasi & Konfirmasi (Tahap 1)";
+                bannerDesc.innerText = "Menerima pengajuan siswa secara real-time, validasi orang tua via WhatsApp, dan beri persetujuan keluar.";
+                bannerIcon.innerHTML = '<i class="fa-solid fa-user-tie"></i>';
+                window.renderPiketQueue();
             } else if (role === 'security') {
-                bannerTitle.innerText = "Portal Satpam Gerbang Depan: Validasi Fisik Keluar (Approval 2)";
-                bannerDesc.innerText = "Pindai tiket QR siswa menggunakan kamera HP pos untuk mencatat keluar & membuka palang.";
+                bannerTitle.innerText = "Portal Satpam Gerbang Depan: Validasi Fisik Keluar (Tahap 2)";
+                bannerDesc.innerText = "Pindai tiket QR siswa dengan kamera HP pos untuk mencatat keluar & membuka palang.";
                 bannerIcon.innerHTML = '<i class="fa-solid fa-shield-halved"></i>';
-                renderSecurityQueue();
+                window.renderSecurityQueue();
             } else if (role === 'rekap') {
-                bannerTitle.innerText = "Rekapitulasi & Log Audit Izin Sekolah";
-                bannerDesc.innerText = "Daftar histori lengkap seluruh proses perizinan siswa keluar dan pulang sekolah.";
+                bannerTitle.innerText = "Rekapitulasi & Log Audit Izin Sekolah (Real-time)";
+                bannerDesc.innerText = "Riwayat audit lengkap proses perizinan siswa keluar dan pulang sekolah.";
                 bannerIcon.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i>';
-                renderRekapTable();
+                window.renderRekapTable();
             }
 
-            updateBadges();
-        }
+            window.updateBadges();
+        };
 
-        function updateBadges() {
-            const piketPending = requestsData.filter(r => r.status === 'MENUNGGU_GURU').length;
-            const securityPending = requestsData.filter(r => r.status === 'MENUNGGU_SECURITY').length;
+        window.updateBadges = function() {
+            const piketPending = window.requestsData.filter(r => r.status === 'MENUNGGU_GURU').length;
+            const securityPending = window.requestsData.filter(r => r.status === 'MENUNGGU_SECURITY').length;
 
             const badgePiket = document.getElementById('badge-piket');
             const badgeSecurity = document.getElementById('badge-security');
@@ -788,16 +963,16 @@
             const statApproved = document.getElementById('stat-piket-approved');
             const statRejected = document.getElementById('stat-piket-rejected');
             if (statPending) statPending.innerText = piketPending;
-            if (statApproved) statApproved.innerText = requestsData.filter(r => r.status === 'MENUNGGU_SECURITY' || r.status === 'SELESAI_KELUAR').length;
-            if (statRejected) statRejected.innerText = requestsData.filter(r => r.status === 'DITOLAK').length;
+            if (statApproved) statApproved.innerText = window.requestsData.filter(r => r.status === 'MENUNGGU_SECURITY' || r.status === 'SELESAI_KELUAR').length;
+            if (statRejected) statRejected.innerText = window.requestsData.filter(r => r.status === 'DITOLAK').length;
 
             const secReadyCount = document.getElementById('security-ready-count');
             if (secReadyCount) secReadyCount.innerText = `${securityPending} Siap Keluar`;
-        }
+        };
 
-        function renderSiswaActivePass() {
+        window.renderSiswaActivePass = function() {
             const passContainer = document.getElementById('active-pass-container');
-            const currentItem = requestsData.find(r => r.id === activeStudentId) || requestsData[0];
+            const currentItem = window.requestsData.find(r => r.id === window.activeStudentId) || window.requestsData[0];
 
             if (!currentItem) {
                 passContainer.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">Belum ada pengajuan izin aktif.</div>`;
@@ -812,10 +987,10 @@
             let step3Class = 'border-slate-300 text-slate-400';
 
             if (currentItem.status === 'MENUNGGU_GURU') {
-                statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">Menunggu Guru Piket</span>`;
+                statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">Menunggu Piket / BK</span>`;
                 step1Class = 'step-active';
             } else if (currentItem.status === 'MENUNGGU_SECURITY') {
-                statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800">Disetujui Piket • Ke Gerbang</span>`;
+                statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800">Disetujui Guru • Ke Gerbang</span>`;
                 step1Class = 'step-done';
                 step2Class = 'step-active';
             } else if (currentItem.status === 'SELESAI_KELUAR') {
@@ -847,14 +1022,14 @@
                                 <div class="w-8 h-8 rounded-full border-2 bg-white flex items-center justify-center text-xs font-bold ${step1Class}">
                                     ${currentItem.status !== 'MENUNGGU_GURU' && currentItem.status !== 'DITOLAK' ? '<i class="fa-solid fa-check"></i>' : '1'}
                                 </div>
-                                <span class="text-[10px] font-semibold mt-1 text-slate-600">Guru Piket</span>
+                                <span class="text-[10px] font-semibold mt-1 text-slate-600">Guru Piket/BK</span>
                             </div>
 
                             <div class="relative z-10 flex flex-col items-center">
                                 <div class="w-8 h-8 rounded-full border-2 bg-white flex items-center justify-center text-xs font-bold ${step2Class}">
                                     ${currentItem.status === 'SELESAI_KELUAR' ? '<i class="fa-solid fa-check"></i>' : '2'}
                                 </div>
-                                <span class="text-[10px] font-semibold mt-1 text-slate-600">Pos Security</span>
+                                <span class="text-[10px] font-semibold mt-1 text-slate-600">Pos Satpam</span>
                             </div>
 
                             <div class="relative z-10 flex flex-col items-center">
@@ -882,7 +1057,7 @@
                         </div>
                         ${currentItem.piketApprover ? `
                         <div class="pt-1.5 border-t border-slate-200/60 flex justify-between">
-                            <span class="text-slate-400">Persetujuan Piket:</span>
+                            <span class="text-slate-400">Persetujuan:</span>
                             <span class="font-semibold text-emerald-700">${currentItem.piketApprover} (${currentItem.piketTime})</span>
                         </div>
                         ` : ''}
@@ -901,9 +1076,9 @@
                     </button>
                 </div>
             `;
-        }
+        };
 
-        function handleFormSubmit(e) {
+        window.handleFormSubmit = async function(e) {
             e.preventDefault();
 
             const name = document.getElementById('input-nama').value.trim();
@@ -915,7 +1090,8 @@
 
             const now = new Date();
             const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
-            const newId = `IZN-${now.getFullYear()}-` + String(requestsData.length + 1).padStart(3, '0');
+            const randomCode = Math.floor(100 + Math.random() * 900);
+            const newId = `IZN-${now.getFullYear()}-${randomCode}`;
 
             const newRecord = {
                 id: newId,
@@ -934,21 +1110,34 @@
                 securityApprover: null,
                 securityNote: null,
                 securityTime: null,
-                exitPlate: null
+                exitPlate: null,
+                createdAt: Date.now()
             };
 
-            requestsData.unshift(newRecord);
-            activeStudentId = newId;
+            // Cloud Save if available
+            if (db && currentUser) {
+                try {
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'e-izin-sma-negeri1';
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'permits', newId);
+                    await setDoc(docRef, newRecord);
+                } catch (err) {
+                    console.error("Gagal simpan ke cloud, fallback ke lokal:", err);
+                    window.requestsData.unshift(newRecord);
+                }
+            } else {
+                window.requestsData.unshift(newRecord);
+            }
 
+            window.activeStudentId = newId;
             document.getElementById('form-izin').reset();
-            showToast(`Permohonan ${newId} berhasil dikirim ke Guru Piket!`);
-            renderSiswaActivePass();
-            updateBadges();
-        }
+            window.showToast(`Permohonan ${newId} berhasil dikirim! Menunggu persetujuan Guru Piket / BK.`);
+            window.renderSiswaActivePass();
+            window.updateBadges();
+        };
 
-        function renderPiketQueue() {
+        window.renderPiketQueue = function() {
             const container = document.getElementById('piket-queue-container');
-            const pendingList = requestsData.filter(r => r.status === 'MENUNGGU_GURU');
+            const pendingList = window.requestsData.filter(r => r.status === 'MENUNGGU_GURU');
 
             if (pendingList.length === 0) {
                 container.innerHTML = `
@@ -957,7 +1146,7 @@
                             <i class="fa-solid fa-check"></i>
                         </div>
                         <h4 class="font-bold text-slate-700 text-sm">Tidak ada antrean pending</h4>
-                        <p class="text-xs text-slate-400">Semua permohonan telah diverifikasi oleh Guru Piket.</p>
+                        <p class="text-xs text-slate-400">Semua permohonan telah diverifikasi oleh Guru Piket / BK.</p>
                     </div>
                 `;
                 return;
@@ -991,10 +1180,10 @@
                     </div>
                 </div>
             `).join('');
-        }
+        };
 
-        function openPiketModal(id) {
-            const item = requestsData.find(r => r.id === id);
+        window.openPiketModal = function(id) {
+            const item = window.requestsData.find(r => r.id === id);
             if (!item) return;
 
             document.getElementById('piket-target-id').value = id;
@@ -1005,46 +1194,62 @@
             document.getElementById('piket-note-input').value = '';
 
             document.getElementById('modal-piket-approve').classList.remove('hidden');
-        }
+        };
 
-        function confirmPiketAction(type) {
+        window.confirmPiketAction = async function(type) {
             const id = document.getElementById('piket-target-id').value;
-            const officer = document.getElementById('officer-piket-name').value || 'Guru Piket';
+            const officerRole = document.getElementById('officer-role-select')?.value || 'Guru Piket';
+            const officerRawName = document.getElementById('officer-piket-name')?.value || 'Hendra, M.Pd';
+            const officer = `${officerRawName} (${officerRole})`;
             const note = document.getElementById('piket-note-input').value.trim();
             const parentConfirmed = document.getElementById('check-parent-confirmed').checked;
 
-            const idx = requestsData.findIndex(r => r.id === id);
+            const idx = window.requestsData.findIndex(r => r.id === id);
             if (idx === -1) return;
 
             const now = new Date();
             const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
 
+            const updatedFields = {};
             if (type === 'APPROVE') {
-                requestsData[idx].status = 'MENUNGGU_SECURITY';
-                requestsData[idx].piketApprover = officer;
-                requestsData[idx].piketNote = note || (parentConfirmed ? 'Disetujui. Sudah konfirmasi orang tua.' : 'Disetujui.');
-                requestsData[idx].piketTime = timeStr;
-                requestsData[idx].parentConfirmed = parentConfirmed;
-                showToast(`Izin ${id} disetujui Guru Piket. Siswa diteruskan ke Pos Security!`);
+                updatedFields.status = 'MENUNGGU_SECURITY';
+                updatedFields.piketApprover = officer;
+                updatedFields.piketNote = note || (parentConfirmed ? 'Disetujui. Sudah konfirmasi orang tua.' : 'Disetujui.');
+                updatedFields.piketTime = timeStr;
+                updatedFields.parentConfirmed = parentConfirmed;
+                window.showToast(`Izin ${id} disetujui ${officerRole}. Siswa langsung muncul di Pos Security!`);
             } else {
-                requestsData[idx].status = 'DITOLAK';
-                requestsData[idx].piketApprover = officer;
-                requestsData[idx].piketNote = note || 'Tidak disetujui guru piket.';
-                requestsData[idx].piketTime = timeStr;
-                showToast(`Izin ${id} ditolak.`, false);
+                updatedFields.status = 'DITOLAK';
+                updatedFields.piketApprover = officer;
+                updatedFields.piketNote = note || `Ditolak oleh ${officerRole}.`;
+                updatedFields.piketTime = timeStr;
+                window.showToast(`Izin ${id} ditolak.`, false);
             }
 
-            closeModal('modal-piket-approve');
-            renderPiketQueue();
-            updateBadges();
-            if (id === activeStudentId) renderSiswaActivePass();
-        }
+            // Sync to Cloud or fallback to local
+            if (db && currentUser) {
+                try {
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'e-izin-sma-negeri1';
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'permits', id);
+                    await updateDoc(docRef, updatedFields);
+                } catch (err) {
+                    console.error("Cloud update error:", err);
+                    Object.assign(window.requestsData[idx], updatedFields);
+                }
+            } else {
+                Object.assign(window.requestsData[idx], updatedFields);
+            }
 
-        function renderSecurityQueue() {
+            window.closeModal('modal-piket-approve');
+            // Re-render ALL views instantly without needing page reload
+            updateUIAfterDataSync();
+        };
+
+        window.renderSecurityQueue = function() {
             const container = document.getElementById('security-queue-container');
             const searchKeyword = (document.getElementById('security-search')?.value || '').toLowerCase();
             
-            let list = requestsData.filter(r => r.status === 'MENUNGGU_SECURITY');
+            let list = window.requestsData.filter(r => r.status === 'MENUNGGU_SECURITY');
             if (searchKeyword) {
                 list = list.filter(r => 
                     r.name.toLowerCase().includes(searchKeyword) ||
@@ -1060,7 +1265,7 @@
                             <i class="fa-solid fa-user-shield"></i>
                         </div>
                         <h4 class="font-bold text-slate-700 text-sm">Tidak ada siswa menunggu di gerbang</h4>
-                        <p class="text-xs text-slate-400">Siswa yang disetujui Guru Piket akan muncul otomatis di pos ini.</p>
+                        <p class="text-xs text-slate-400">Siswa yang disetujui Guru Piket / BK akan seketika muncul otomatis di pos ini.</p>
                     </div>
                 `;
                 return;
@@ -1077,7 +1282,7 @@
                         <p class="text-xs text-slate-600"><span class="font-semibold text-slate-800">Alasan:</span> ${item.type} - ${item.reason}</p>
                         <div class="bg-blue-50/70 p-2 rounded-lg text-xs text-blue-900 flex items-center gap-2 border border-blue-100">
                             <i class="fa-solid fa-signature text-blue-500"></i>
-                            <span>Acc Guru Piket: <b>${item.piketApprover}</b> (${item.piketTime}) - <i>"${item.piketNote}"</i></span>
+                            <span>Disetujui: <b>${item.piketApprover}</b> (${item.piketTime}) - <i>"${item.piketNote}"</i></span>
                         </div>
                     </div>
 
@@ -1093,31 +1298,31 @@
                     </div>
                 </div>
             `).join('');
-        }
+        };
 
-        function filterSecurityList() {
-            renderSecurityQueue();
-        }
+        window.filterSecurityList = function() {
+            window.renderSecurityQueue();
+        };
 
-        /* Mobile Camera Scanner Implementation */
-        function openScannerModal() {
+        /* Mobile Camera Scanner */
+        window.openScannerModal = function() {
             const modal = document.getElementById('modal-camera-scanner');
             const feedback = document.getElementById('scanner-feedback');
             modal.classList.remove('hidden');
             feedback.innerHTML = `<span>Menghubungkan ke kamera smartphone...</span>`;
 
-            if (html5QrScannerInstance) {
-                html5QrScannerInstance.stop().catch(() => {}).then(() => {
+            if (window.html5QrScannerInstance) {
+                window.html5QrScannerInstance.stop().catch(() => {}).then(() => {
                     startCameraScanner();
                 });
             } else {
                 startCameraScanner();
             }
-        }
+        };
 
         function startCameraScanner() {
             const feedback = document.getElementById('scanner-feedback');
-            html5QrScannerInstance = new Html5Qrcode("qr-camera-reader");
+            window.html5QrScannerInstance = new Html5Qrcode("qr-camera-reader");
             
             const config = {
                 fps: 15,
@@ -1125,31 +1330,30 @@
                 aspectRatio: 1.0
             };
 
-            // Menggunakan kamera belakang (environment) secara default
-            html5QrScannerInstance.start(
-                { facingMode: currentCameraFacing },
+            window.html5QrScannerInstance.start(
+                { facingMode: window.currentCameraFacing },
                 config,
                 onQrCodeScannedSuccess,
                 onQrCodeScanError
             ).then(() => {
-                isScannerRunning = true;
-                feedback.innerHTML = `<span class="text-emerald-400 font-medium"><i class="fa-solid fa-circle-dot text-[8px] animate-ping mr-1"></i> Kamera Aktif (${currentCameraFacing === 'environment' ? 'Kamera Belakang' : 'Kamera Depan'}). Arahkan ke QR.</span>`;
+                window.isScannerRunning = true;
+                feedback.innerHTML = `<span class="text-emerald-400 font-medium"><i class="fa-solid fa-circle-dot text-[8px] animate-ping mr-1"></i> Kamera Aktif (${window.currentCameraFacing === 'environment' ? 'Belakang' : 'Depan'}). Arahkan ke QR.</span>`;
             }).catch(err => {
-                isScannerRunning = false;
+                window.isScannerRunning = false;
                 feedback.innerHTML = `
                     <div class="text-rose-400 text-xs text-center space-y-1">
-                        <p><i class="fa-solid fa-triangle-exclamation"></i> Izin kamera dibatasi atau tidak tersedia.</p>
-                        <p class="text-slate-400 text-[11px]">Silakan izinkan kamera pada browser atau gunakan tombol <b>Pilih Gambar</b> / <b>Uji Coba</b> di bawah.</p>
+                        <p><i class="fa-solid fa-triangle-exclamation"></i> Izin kamera dibatasi oleh browser.</p>
+                        <p class="text-slate-400 text-[11px]">Gunakan opsi <b>Pilih Gambar</b> atau tombol <b>Uji Coba</b> di bawah.</p>
                     </div>
                 `;
             });
         }
 
-        function toggleCameraFacing() {
-            currentCameraFacing = (currentCameraFacing === 'environment') ? 'user' : 'environment';
-            if (html5QrScannerInstance && isScannerRunning) {
-                html5QrScannerInstance.stop().then(() => {
-                    isScannerRunning = false;
+        window.toggleCameraFacing = function() {
+            window.currentCameraFacing = (window.currentCameraFacing === 'environment') ? 'user' : 'environment';
+            if (window.html5QrScannerInstance && window.isScannerRunning) {
+                window.html5QrScannerInstance.stop().then(() => {
+                    window.isScannerRunning = false;
                     startCameraScanner();
                 }).catch(() => {
                     startCameraScanner();
@@ -1157,64 +1361,56 @@
             } else {
                 startCameraScanner();
             }
-        }
+        };
 
         function onQrCodeScanError(errorMessage) {
-            // Frame read error diabaikan untuk menjaga performa fps
+            // Ignored to avoid log flooding
         }
 
         function onQrCodeScannedSuccess(decodedText) {
-            // Format QR: PASSSMA1:IZN-2026-001:0062839120:MENUNGGU_SECURITY atau langsung ID
             let scannedTicketId = decodedText;
             if (decodedText.startsWith('PASSSMA1:')) {
                 const parts = decodedText.split(':');
                 scannedTicketId = parts[1] || decodedText;
             }
 
-            // Mainkan suara BEEP sukses!
-            playBeep(true);
-
-            // Tutup kamera segera agar tidak trigger scan ganda
-            closeScannerModal();
-
-            // Verifikasi data
+            window.playBeep(true);
+            window.closeScannerModal();
             processScannedTicket(scannedTicketId);
         }
 
         function processScannedTicket(ticketId) {
-            const target = requestsData.find(r => r.id.toUpperCase() === ticketId.trim().toUpperCase());
+            const target = window.requestsData.find(r => r.id.toUpperCase() === ticketId.trim().toUpperCase());
 
             if (!target) {
-                playBeep(false);
-                showToast(`Tiket ${ticketId} tidak terdaftar di sistem!`, false);
+                window.playBeep(false);
+                window.showToast(`Tiket ${ticketId} tidak terdaftar di sistem!`, false);
                 return;
             }
 
             if (target.status === 'MENUNGGU_GURU') {
-                playBeep(false);
-                showToast(`Peringatan: Tiket ${target.id} (${target.name}) BELUM disetujui Guru Piket!`, false);
+                window.playBeep(false);
+                window.showToast(`Peringatan: Tiket ${target.id} (${target.name}) BELUM disetujui Guru Piket/BK!`, false);
                 return;
             }
 
             if (target.status === 'SELESAI_KELUAR') {
-                playBeep(false);
-                showToast(`Tiket Kedaluwarsa: ${target.name} sudah keluar gerbang pada ${target.securityTime}.`, false);
+                window.playBeep(false);
+                window.showToast(`Tiket Kedaluwarsa: ${target.name} sudah keluar gerbang pada ${target.securityTime}.`, false);
                 return;
             }
 
             if (target.status === 'DITOLAK') {
-                playBeep(false);
-                showToast(`Tiket Ditolak: Permohonan ${target.id} ditolak oleh guru piket.`, false);
+                window.playBeep(false);
+                window.showToast(`Tiket Ditolak: Permohonan ${target.id} ditolak guru.`, false);
                 return;
             }
 
-            // Jika status valid (MENUNGGU_SECURITY): Buka dialog konfirmasi satpam
-            showToast(`QR Valid! Membuka verifikasi gerbang untuk ${target.name}...`);
-            openSecurityModal(target.id);
+            window.showToast(`QR Terverifikasi! Membuka verifikasi gerbang untuk ${target.name}...`);
+            window.openSecurityModal(target.id);
         }
 
-        /* Image upload alternative scanner */
-        function handleQrImageUpload(e) {
+        window.handleQrImageUpload = function(e) {
             const file = e.target.files[0];
             if (!file) return;
 
@@ -1224,78 +1420,93 @@
                     onQrCodeScannedSuccess(decodedText);
                 })
                 .catch(err => {
-                    playBeep(false);
-                    showToast("Tidak dapat mendeteksi QR pada gambar tersebut!", false);
+                    window.playBeep(false);
+                    window.showToast("Tidak dapat mendeteksi QR pada gambar tersebut!", false);
                 });
-        }
+        };
 
-        /* Direct Test Simulator for Iframe / Desktop */
-        function simulateScanSampleTicket() {
-            const readyItem = requestsData.find(r => r.status === 'MENUNGGU_SECURITY');
+        window.simulateScanSampleTicket = function() {
+            const readyItem = window.requestsData.find(r => r.status === 'MENUNGGU_SECURITY');
             if (readyItem) {
                 onQrCodeScannedSuccess(readyItem.id);
             } else {
-                showToast("Tidak ada siswa dengan status siap keluar saat ini.", false);
+                window.showToast("Tidak ada siswa dengan status siap keluar saat ini.", false);
             }
-        }
+        };
 
-        function closeScannerModal() {
+        window.closeScannerModal = function() {
             const modal = document.getElementById('modal-camera-scanner');
             if (modal) modal.classList.add('hidden');
 
-            if (html5QrScannerInstance && isScannerRunning) {
-                html5QrScannerInstance.stop().then(() => {
-                    isScannerRunning = false;
+            if (window.html5QrScannerInstance && window.isScannerRunning) {
+                window.html5QrScannerInstance.stop().then(() => {
+                    window.isScannerRunning = false;
                 }).catch(() => {
-                    isScannerRunning = false;
+                    window.isScannerRunning = false;
                 });
             }
-        }
+        };
 
-        function openSecurityModal(id) {
-            const item = requestsData.find(r => r.id === id);
+        window.openSecurityModal = function(id) {
+            const item = window.requestsData.find(r => r.id === id);
             if (!item) return;
 
             document.getElementById('security-target-id').value = id;
             document.getElementById('sec-modal-ticket').innerText = item.id;
             document.getElementById('sec-modal-student').innerText = `${item.name} (${item.kelas})`;
-            document.getElementById('sec-modal-piket-note').innerText = `"${item.piketNote || 'Disetujui Guru Piket'}"`;
+            document.getElementById('sec-modal-piket-note').innerText = `"${item.piketNote || 'Disetujui'}"`;
             document.getElementById('sec-pickup-info').value = '';
 
             document.getElementById('modal-security-gate').classList.remove('hidden');
-        }
+        };
 
-        function confirmSecurityAction() {
+        window.confirmSecurityAction = async function() {
             const id = document.getElementById('security-target-id').value;
-            const officer = document.getElementById('officer-security-name').value || 'Satpam Pos A';
-            const pickupInfo = document.getElementById('sec-pickup-info').value.trim();
+            const officer = document.getElementById('officer-security-name')?.value || 'Satpam Pos A';
+            const pickupInfo = document.getElementById('sec-pickup-info')?.value.trim();
 
-            const idx = requestsData.findIndex(r => r.id === id);
+            const idx = window.requestsData.findIndex(r => r.id === id);
             if (idx === -1) return;
 
             const now = new Date();
             const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
 
-            requestsData[idx].status = 'SELESAI_KELUAR';
-            requestsData[idx].securityApprover = officer;
-            requestsData[idx].securityNote = pickupInfo || 'Keluar gerbang utama.';
-            requestsData[idx].securityTime = timeStr;
+            const updatedFields = {
+                status: 'SELESAI_KELUAR',
+                securityApprover: officer,
+                securityNote: pickupInfo || 'Keluar gerbang utama.',
+                securityTime: timeStr
+            };
 
-            closeModal('modal-security-gate');
-            playBeep(true);
-            showToast(`Palang Gerbang Dibuka! Siswa ${requestsData[idx].name} telah keluar sekolah.`);
-            renderSecurityQueue();
-            updateBadges();
-            if (id === activeStudentId) renderSiswaActivePass();
-        }
+            // Cloud sync or local memory update
+            if (db && currentUser) {
+                try {
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'e-izin-sma-negeri1';
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'permits', id);
+                    await updateDoc(docRef, updatedFields);
+                } catch (err) {
+                    console.error("Cloud update error:", err);
+                    Object.assign(window.requestsData[idx], updatedFields);
+                }
+            } else {
+                Object.assign(window.requestsData[idx], updatedFields);
+            }
 
-        function renderRekapTable() {
+            window.closeModal('modal-security-gate');
+            window.playBeep(true);
+            window.showToast(`Palang Gerbang Dibuka! Siswa ${window.requestsData[idx].name} telah keluar.`);
+            
+            // Re-render all views and badges immediately without refresh
+            updateUIAfterDataSync();
+        };
+
+        window.renderRekapTable = function() {
             const tbody = document.getElementById('rekap-table-body');
             const search = (document.getElementById('rekap-search')?.value || '').toLowerCase();
             const statusFilter = document.getElementById('rekap-filter-status')?.value || 'ALL';
             const jenisFilter = document.getElementById('rekap-filter-jenis')?.value || 'ALL';
 
-            let filtered = [...requestsData];
+            let filtered = [...window.requestsData];
 
             if (statusFilter !== 'ALL') {
                 filtered = filtered.filter(r => r.status === statusFilter);
@@ -1321,8 +1532,8 @@
 
             tbody.innerHTML = filtered.map(item => {
                 let badge = '';
-                if (item.status === 'MENUNGGU_GURU') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Menunggu Piket</span>';
-                else if (item.status === 'MENUNGGU_SECURITY') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">Acc Piket (Di Gerbang)</span>';
+                if (item.status === 'MENUNGGU_GURU') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Menunggu Guru</span>';
+                else if (item.status === 'MENUNGGU_SECURITY') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">Disetujui Guru (Di Gerbang)</span>';
                 else if (item.status === 'SELESAI_KELUAR') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Selesai (Keluar)</span>';
                 else if (item.status === 'DITOLAK') badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">Ditolak</span>';
 
@@ -1358,10 +1569,10 @@
                     </tr>
                 `;
             }).join('');
-        }
+        };
 
-        function openDigitalPassModal(id) {
-            const item = requestsData.find(r => r.id === id);
+        window.openDigitalPassModal = function(id) {
+            const item = window.requestsData.find(r => r.id === id);
             if (!item) return;
 
             const modal = document.getElementById('modal-view-pass');
@@ -1384,7 +1595,7 @@
 
                     <div class="mt-3 pt-3 border-t border-slate-200 text-left text-xs space-y-1">
                         <div class="flex justify-between"><span class="text-slate-400">Keperluan:</span> <span class="font-semibold text-slate-700">${item.type}</span></div>
-                        <div class="flex justify-between"><span class="text-slate-400">Guru Piket:</span> <span class="font-semibold ${item.piketApprover ? 'text-emerald-700' : 'text-amber-600'}">${item.piketApprover || 'Menunggu'}</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Guru Piket/BK:</span> <span class="font-semibold ${item.piketApprover ? 'text-emerald-700' : 'text-amber-600'}">${item.piketApprover || 'Menunggu'}</span></div>
                         <div class="flex justify-between"><span class="text-slate-400">Security Gate:</span> <span class="font-semibold ${item.securityApprover ? 'text-blue-700' : 'text-slate-400'}">${item.securityApprover || 'Menunggu Scan'}</span></div>
                     </div>
                 </div>
@@ -1406,18 +1617,61 @@
                     });
                 }
             }, 60);
-        }
+        };
 
-        function closeModal(modalId) {
+        window.closeModal = function(modalId) {
             const el = document.getElementById(modalId);
             if (el) el.classList.add('hidden');
-        }
+        };
 
-        function exportCSV() {
+        // Cloud Configuration Modal Helpers (for GitHub Pages hosting)
+        window.openConfigModal = function() {
+            const modal = document.getElementById('modal-cloud-config');
+            const textarea = document.getElementById('input-firebase-config');
+            if (textarea) {
+                try {
+                    const saved = localStorage.getItem('e_izin_custom_firebase');
+                    if (saved) textarea.value = saved;
+                } catch(e) {}
+            }
+            if (modal) modal.classList.remove('hidden');
+        };
+
+        window.saveCustomFirebaseConfig = function() {
+            const rawVal = document.getElementById('input-firebase-config')?.value.trim();
+            if (!rawVal) {
+                window.showToast("Masukkan konfigurasi Firebase terlebih dahulu!", false);
+                return;
+            }
+
+            try {
+                // Validate JSON parsing
+                JSON.parse(rawVal);
+                localStorage.setItem('e_izin_custom_firebase', rawVal);
+                window.showToast("Konfigurasi tersimpan! Menghubungkan ulang...");
+                window.closeModal('modal-cloud-config');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 800);
+            } catch (err) {
+                window.showToast("Format JSON tidak valid. Pastikan format JSON benar!", false);
+            }
+        };
+
+        window.resetToLocalMemory = function() {
+            try {
+                localStorage.removeItem('e_izin_custom_firebase');
+            } catch(e) {}
+            window.showToast("Menggunakan mode offline internal.");
+            window.closeModal('modal-cloud-config');
+            setConnectionStatus(false);
+        };
+
+        window.exportCSV = function() {
             let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "ID,Nama,Kelas,NISN,No_Ortu,Jenis_Izin,Alasan,Jam_Diajukan,Guru_Piket,Jam_Piket,Security,Jam_Security,Status\n";
+            csvContent += "ID,Nama,Kelas,NISN,No_Ortu,Jenis_Izin,Alasan,Jam_Diajukan,Guru_Piket_BK,Jam_Piket,Security,Jam_Security,Status\n";
 
-            requestsData.forEach(r => {
+            window.requestsData.forEach(r => {
                 const row = [
                     r.id,
                     `"${r.name}"`,
@@ -1443,16 +1697,17 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showToast("File CSV berhasil diunduh!");
-        }
+            window.showToast("File CSV berhasil diunduh!");
+        };
 
-        function printFilteredReport() {
+        window.printFilteredReport = function() {
             window.print();
-        }
+        };
 
-        // Initialize default view
+        // Bootstrap on DOM ready
         window.addEventListener('DOMContentLoaded', () => {
-            switchRole('siswa');
+            initCloudSync();
+            window.switchRole('siswa');
         });
     </script>
 </body>
